@@ -1,12 +1,14 @@
 module GridLock
 
-  CROSS = "✚"
-  SQUARE = "▢"
-  CIRCLE = "◯"
+  Symbols = [
+    CROSS = "✚",
+    SQUARE = "▢",
+    CIRCLE = "◯",
+  ]
 
   module Pieces
 
-    ALL = [
+    All = [
 
       A = [CROSS,  CIRCLE],
       B = [CROSS,  SQUARE],
@@ -28,7 +30,7 @@ module GridLock
 
   end
 
-  BOARD = [
+  Board = [
     [ SQUARE,  CROSS, CIRCLE, CIRCLE ],
     [ CIRCLE, SQUARE, SQUARE,  CROSS ],
     [  CROSS,  CROSS, CIRCLE,  CROSS ],
