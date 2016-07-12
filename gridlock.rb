@@ -28,6 +28,17 @@ module GridLock
 
     ]
 
+    def self.multidimensional? piece
+      piece[0].is_a?(Array)
+    end
+
+    def self.rotate piece
+      if multidimensional? piece
+        [piece[1][0], piece[0][0]]
+      else
+        [[piece[0]],[piece[1]]]
+      end
+    end
   end
 
   Board = [
@@ -39,4 +50,5 @@ module GridLock
     [ CIRCLE, SQUARE, CIRCLE, CIRCLE ],
     [ CIRCLE, CIRCLE, SQUARE, SQUARE ]
   ]
+
 end
