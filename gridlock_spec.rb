@@ -14,12 +14,19 @@ RSpec.describe GridLock do
   end
 
   it "can rotate pieces" do
-    a = GridLock::Pieces::A
-    rotated_a = GridLock::Pieces.rotate(a)
-    expect(a).to eq([GridLock::CROSS,GridLock::CIRCLE])
-    expect(rotated_a).to eq([[GridLock::CROSS],[GridLock::CIRCLE]])
-    rotated_a_again = GridLock::Pieces.rotate(rotated_a)
-    expect(rotated_a_again).to eq([GridLock::CIRCLE,GridLock::CROSS])
+
+    piece = GridLock::Pieces::A
+
+    rotated_1 = GridLock::Pieces.rotate(piece)     # 90º
+    rotated_2 = GridLock::Pieces.rotate(rotated_1) # 180º
+    rotated_3 = GridLock::Pieces.rotate(rotated_2) # 270º
+    rotated_4 = GridLock::Pieces.rotate(rotated_3) # 360º -> original piece
+
+    expect(piece).to     eq([GridLock::CROSS,GridLock::CIRCLE])
+    expect(rotated_1).to eq([[GridLock::CROSS],[GridLock::CIRCLE]])
+    expect(rotated_2).to eq([GridLock::CIRCLE,GridLock::CROSS])
+    expect(rotated_3).to eq([[GridLock::CIRCLE],[GridLock::CROSS]])
+    expect(rotated_4).to eq(piece)
   end
 
 end
