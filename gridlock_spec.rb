@@ -21,9 +21,9 @@ RSpec.describe GridLock do
     let(:rotated_3) { GridLock::Pieces.rotate(rotated_2) } # 270º
     let(:rotated_4) { GridLock::Pieces.rotate(rotated_3) } # 360º -> original piece
 
-    context "one dimension" do
+    it("original") { expect(piece).to eq( [GridLock::CROSS, GridLock::CIRCLE]) }
 
-      it("original") { expect(piece).to eq( [GridLock::CROSS, GridLock::CIRCLE]) }
+    context "one dimension" do
 
       it "90º" do
         expect(rotated_1).to eq( [
