@@ -78,6 +78,9 @@ RSpec.describe GridLock do
 
   context 'game' do
     let(:game) { GridLock::Game.new }
+    let(:cross_circle) {  [GridLock::CROSS, GridLock::CIRCLE] }
+    let(:rotated_cross_circle) {GridLock::Pieces.rotate(cross_circle)}
+    let(:square_cross_circle) { [[GridLock::SQUARE, GridLock::CROSS], [GridLock::CIRCLE]] }
 
     it "print" do
       expect { game.print_game }.to output( %{Game started
@@ -92,20 +95,24 @@ RSpec.describe GridLock do
     end
 
     context ".match?" do
-      let(:cross_circle) {  [GridLock::CROSS, GridLock::CIRCLE] }
-      let(:rotated_cross_circle) {GridLock::Pieces.rotate(cross_circle)}
-      let(:square_cross_circle) { [[GridLock::SQUARE, GridLock::CROSS], [GridLock::CIRCLE]] }
       it { game.print_game; expect(game.match?(cross_circle, 0, 0)).to be_falsy  }
       it { expect(game.match?(cross_circle, 0, 1)).to be_truthy }
       it { expect(game.match?(square_cross_circle, 0, 0)).to be_truthy }
       it { expect(game.match?(square_cross_circle, 0, 1)).to be_falsy}
       it { expect(game.match?(rotated_cross_circle, 4, 0)).to be_truthy}
+      it { expect(game.match?(rotated_cross_circle, 4, 2)).to be_truthy}
       it { expect(game.match?(rotated_cross_circle, 4, 1)).to be_falsy}
     end
 
     context ".fit?" do
-      it 'false when filled'
-      it 'false when symbol does not match on position'
+      it 'false when filled' do
+        game.fill(0,0)
+        expect(game.fit?(cross_circle, 0,0)).to be_falsy
+      end
+
+      it 'false when symbol does not match on position' do
+        expect(game.fit?(cross_circle, 2,1)).to be_truthy
+      end
     end
   end
 end
