@@ -57,4 +57,17 @@ module GridLock
     [ CIRCLE, CIRCLE, SQUARE, SQUARE ]
   ]
 
+  class Game
+
+    def initialize
+      @status = "started"
+    end
+
+    def print
+      puts "Game #@status"
+      GridLock::Board.each do |line|
+        puts line.join(" ")
+      end
+    end
+  end
 end
