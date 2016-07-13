@@ -10,4 +10,4 @@ Challenge yourself and write a strategy to solve it!
 
 [![asciicast](https://asciinema.org/a/79433.png)](https://asciinema.org/a/79433)
 
-My own is now working at all :hat: :rabbit:.
+My own is now working at all :tophat: :rabbit:.
