@@ -114,6 +114,13 @@ module GridLock
       true
     end
 
+    def put! piece, x, y
+      return false unless fit? piece, x, y
+      piece.
+      fill(x, y)
+      true
+    end
+
     def print_game
       puts "Game #@status"
       GridLock::Board.each_with_index.map do |line, line_index|

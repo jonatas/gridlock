@@ -111,7 +111,18 @@ RSpec.describe GridLock do
       end
 
       it 'false when symbol does not match on position' do
+        expect(game.fit?(cross_circle, 2,0)).to be_falsy
+      end
+
+      it 'when spot is free and match the position' do
         expect(game.fit?(cross_circle, 2,1)).to be_truthy
+      end
+    end
+
+    context "put!(piece, *position)" do
+      it "fill piece positions" do
+        expect(game.put!(cross_circle, 2,1)).to be_truthy
+        expect(game.put!(cross_circle, 2,1)).to be_falsy
       end
     end
   end
