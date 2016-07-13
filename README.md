@@ -2,6 +2,6 @@
 
 It's a puzzle game.
 
-![Gridlock Game](https://slack-files.com/T0ASDJWLV-F1NT4UJ7M-5fe03b885d)
+![Gridlock game](https://cloud.githubusercontent.com/assets/15484/16789155/7f1ca878-4881-11e6-9938-70be8bd18f3f.jpg)
 
 
