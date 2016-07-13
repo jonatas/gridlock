@@ -83,6 +83,31 @@ module GridLock
       @fill[x][y]
     end
 
+    def match? piece, x, y
+      #puts "match? #{piece.inspect}, #{x}, #{y}"
+      piece.each_with_index do |symbol, i|
+        expected_symbol = GridLock::Board[x][y+i]
+        if symbol.is_a? Array
+          symbol.each_with_index do |_symbol,j|
+            expected_symbol = GridLock::Board[x+i][y+j]
+            #puts "#{x}:#{y} - #{i}:#{j} #{expected_symbol} != <#{_symbol}"
+            if _symbol != expected_symbol
+              return false
+            end
+          end
+        elsif expected_symbol != symbol
+          #puts "#{x}:#{y} #{expected_symbol} != <#{symbol}"
+          return false
+        end
+      end
+      return true
+    end
+
+    def fit? piece, cursor_x=0, cursor_y=0
+      return false if @fill[cursor_x][cursor_y]
+      true
+    end
+
     def print_game
       puts "Game #@status"
       GridLock::Board.each_with_index.map do |line, line_index|
