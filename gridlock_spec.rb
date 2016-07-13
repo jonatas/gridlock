@@ -13,20 +13,28 @@ RSpec.describe GridLock do
     expect(GridLock::Board).to be_a(Array)
   end
 
-  it "can rotate pieces" do
+  context "rotate" do
+    let(:piece) { GridLock::Pieces::A }
 
-    piece = GridLock::Pieces::A
+    let(:rotated_1) { GridLock::Pieces.rotate(piece) }     # 90º
+    let(:rotated_2) {  GridLock::Pieces.rotate(rotated_1) }  # 180º
+    let(:rotated_3) { GridLock::Pieces.rotate(rotated_2) }  # 270º
+    let(:rotated_4) { GridLock::Pieces.rotate(rotated_3) }  # 360º -> original piece
 
-    rotated_1 = GridLock::Pieces.rotate(piece)     # 90º
-    rotated_2 = GridLock::Pieces.rotate(rotated_1) # 180º
-    rotated_3 = GridLock::Pieces.rotate(rotated_2) # 270º
-    rotated_4 = GridLock::Pieces.rotate(rotated_3) # 360º -> original piece
-
-    expect(piece).to     eq([GridLock::CROSS,GridLock::CIRCLE])
-    expect(rotated_1).to eq([[GridLock::CROSS],[GridLock::CIRCLE]])
-    expect(rotated_2).to eq([GridLock::CIRCLE,GridLock::CROSS])
-    expect(rotated_3).to eq([[GridLock::CIRCLE],[GridLock::CROSS]])
-    expect(rotated_4).to eq(piece)
+    context "one dimensions" do
+      it "pieces" do
+        expect(piece).to     eq( [GridLock::CROSS, GridLock::CIRCLE])
+        expect(rotated_1).to eq( [
+          [GridLock::CROSS],
+          [GridLock::CIRCLE]
+        ])
+        expect(rotated_2).to eq( [ GridLock::CIRCLE, GridLock::CROSS ] )
+        expect(rotated_3).to eq( [
+          [GridLock::CIRCLE],
+          [GridLock::CROSS]
+        ])
+        expect(rotated_4).to eq( piece )
+      end
+    end
   end
-
 end
