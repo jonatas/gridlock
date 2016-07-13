@@ -95,7 +95,7 @@ RSpec.describe GridLock do
     end
 
     context ".match?" do
-      it { game.print_game; expect(game.match?(cross_circle, 0, 0)).to be_falsy  }
+      it { expect(game.match?(cross_circle, 0, 0)).to be_falsy  }
       it { expect(game.match?(cross_circle, 0, 1)).to be_truthy }
       it { expect(game.match?(square_cross_circle, 0, 0)).to be_truthy }
       it { expect(game.match?(square_cross_circle, 0, 1)).to be_falsy}
@@ -121,7 +121,9 @@ RSpec.describe GridLock do
 
     context "put!(piece, *position)" do
       it "fill piece positions" do
+        game.print_game
         expect(game.put!(cross_circle, 2,1)).to be_truthy
+        game.print_game
         expect(game.put!(cross_circle, 2,1)).to be_falsy
       end
     end

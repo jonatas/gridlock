@@ -83,20 +83,24 @@ module GridLock
       @fill[x][y]
     end
 
-    def match? piece, x, y
-      debug "match? #{piece.inspect}, #{x}, #{y}"
+    def each_symbol_of piece
       piece.each_with_index do |symbol, i|
-        expected_symbol = GridLock::Board[x][y+i]
         if symbol.is_a? Array
           symbol.each_with_index do |_symbol,j|
-            expected_symbol = GridLock::Board[x+i][y+j]
-            debug "#{x}:#{y} - #{i}:#{j} #{expected_symbol} != <#{_symbol}"
-            if _symbol != expected_symbol
-              return false
-            end
+            yield _symbol, i, j
           end
-        elsif expected_symbol != symbol
-          debug "#{x}:#{y} #{expected_symbol} != <#{symbol}"
+        else
+          yield symbol, 0, i
+        end
+      end
+    end
+
+    def match? piece, x, y
+      debug "match? #{piece.inspect}, #{x}, #{y}"
+      each_symbol_of(piece) do |symbol, i, j|
+        expected_symbol = GridLock::Board[x+i][y+j]
+        debug "#{x}:#{y} - #{i}:#{j} #{expected_symbol} != <#{symbol}"
+        if symbol != expected_symbol
           return false
         end
       end
@@ -109,15 +113,18 @@ module GridLock
     end
 
     def fit? piece, x=0, y=0
-      return false if @fill[x][y]
+      each_symbol_of piece do |_, i,j|
+        return false if @fill[x+i][y+j]
+      end
       return false unless match?(piece, x, y)
       true
     end
 
     def put! piece, x, y
       return false unless fit? piece, x, y
-      piece.
-      fill(x, y)
+      each_symbol_of piece do |_, i,j|
+        fill(x+i, y+j)
+      end
       true
     end
 
