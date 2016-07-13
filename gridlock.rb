@@ -34,7 +34,13 @@ module GridLock
 
     def self.rotate piece
       if multidimensional? piece
-        [piece[1][0], piece[0][0]]
+        if piece[1][1] || piece[0][1]
+          [[piece[1][0], piece[0][0]],
+           [piece[1][1], piece[0][1]]]
+
+        else
+          [piece[1][0], piece[0][0]]
+        end
       else
         [[piece[0]],[piece[1]]]
       end
