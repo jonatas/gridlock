@@ -77,9 +77,10 @@ RSpec.describe GridLock do
   end
 
   context 'print board' do
+    let(:game) { GridLock::Game.new }
     it "print the board" do
-GridLock::Game.new.print
-      expect { GridLock::Game.new.print }.to output( %{Game started
+
+      expect { game.print_game }.to output( %{Game started
 ▢ ✚ ◯ ◯
 ◯ ▢ ▢ ✚
 ✚ ✚ ◯ ✚
