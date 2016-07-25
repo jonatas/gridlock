@@ -11,6 +11,9 @@ class String
   def green
     colorize(32)
   end
+  def purple
+    colorize(35)
+  end
 
 end
 module GridLock
@@ -77,10 +80,16 @@ module GridLock
     def initialize
       @status = "started"
       @fill = Array.new(GridLock::Board.length) { Array.new(GridLock::Board[0].length, false) }
+      @cursor_hover = {}
+      @lookups = 0
     end
 
     def spot_busy? x, y
       @fill[x][y]
+    end
+
+    def cursor_hover? x, y
+      @cursor_hover[[x,y]]
     end
 
     def each_symbol_of piece
@@ -112,12 +121,48 @@ module GridLock
       @fill[x][y] = true
     end
 
+    def finished?
+      @fill.all?{|row|row.all?&:true?}
+    end
+
+    def print_for(piece)
+      if piece.any?{|e|e.is_a?(Array)}
+        if piece[0][0] == nil
+          [piece[0].join("\n"),piece[1]]
+        elsif piece[0][1] == nil
+          [piece[0].join(" "),piece[1].join(" ")]
+        else
+          [piece[1], piece[0]]
+        end.join("\n")
+      else
+        piece.join(" ") + "\n"
+      end.to_s + " \n\n" + piece.inspect + "\n\n"
+    end
+    def hover(x,y)
+      @cursor_hover[[x,y]] = true
+      yield
+      @cursor_hover[[x,y]] = false
+    end
+
+    def finished?
+    end
+
     def fit? piece, x=0, y=0
-      each_symbol_of piece do |_, i,j|
-        return false if @fill[x+i][y+j]
+      hover(x,y) do
+        puts "\e[H\e[2J \n Loop: #{@lookups+=1}, (#{x},#{y})\n",
+          print_for(piece),nil,nil
+          each_symbol_of(piece) do |symbol, _x, _y|
+            print symbol || "  "
+            print "  "
+          end
+          print_game
+          sleep 1
+          each_symbol_of piece do |_, i,j|
+            return false if @fill[x+i][y+j]
+          end
+          return false unless match?(piece, x, y)
+          true
       end
-      return false unless match?(piece, x, y)
-      true
     end
 
     def put! piece, x, y
@@ -129,12 +174,15 @@ module GridLock
     end
 
     def print_game
-      puts "Game #@status"
+      print "\n"
       GridLock::Board.each_with_index.map do |line, line_index|
         line.each_with_index.map do |spot, column_index|
           if spot_busy?(line_index, column_index)
             print spot.red
-          else
+          end
+          if cursor_hover?(line_index, column_index)
+            print spot.purple
+          else 
             print spot
           end
           print(" ") if column_index < line.size-1
