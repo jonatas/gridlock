@@ -7,40 +7,33 @@ module GridLock
       game = GridLock::Game.new
       pieces = GridLock::Pieces::All
       game.print_game
-      i = 0
       rotated = 0
-      accepted = false
-      while piece = pieces.sample
+      accepted = false 
+      solutions = %w(AABCDDEFGIKN ABCDDEFFGJKM ABCCDEFFIJMN ABDDEEFFIKMN ABBCDEFFIJKM ABBCCCDFIJKM ABBCCCDDEFFJK)
+      pieces = solutions.sample.split("").map{|piece|Object.const_get("GridLock::Pieces::#{piece}")}
+      while !game.finished?
+        piece = pieces.pop
         (GridLock::Board.size - 1).times do |x|
           (GridLock::Board[0].size - 1).times do |y|
-           i += 1
-
-            begin
-              puts "\e[H\e[2J Iteration: #{i}:#{rotated} Piece: #{piece.inspect.send(accepted ? :green : :red)}"
-              #puts "Iteration: #{i}:#{rotated} Piece: #{piece.inspect.send(accepted ? :green : :red)}"
-              game.print_game
-              sleep 0.01
-              if game.fit? piece, x, y
-                game.put! piece, x, y
-                accepted = true
-                piece = pieces.sample
-                next
-              #else
-              #  raise "retry ¬¬"
-              end
-            rescue
-              if (rotated += 1) < 4
-                piece = GridLock::Pieces.rotate piece
-                retry
-              else
-                rotated = 0
-              end
+            if game.fit? piece, x, y
+              game.put! piece, x, y
+              next
+            elsif (r1= GridLock::Pieces.rotate(piece)) && game.fit?(r1, x, y)
+              game.put! r1, x, y
+              next
+            elsif (r2= GridLock::Pieces.rotate(r1)) && game.fit?(r2, x, y)
+              game.put! r2, x, y
+              next
+            elsif (r3= GridLock::Pieces.rotate(r2)) && game.fit?(r3, x, y)
+              game.put! r3, x, y
+              next
             end
           end
+          accepted = false
         end
-        accepted = false
       end
     end
   end
 end
+
 GridLock::Solver.run
