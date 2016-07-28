@@ -24,6 +24,13 @@ module GridLock
     CIRCLE = "◯",
   ]
 
+  def self.ramdom_solution
+    %w(AABCDDEFGIKN ABCDDEFFGJKM ABCCDEFFIJMN ABDDEEFFIKMN ABBCDEFFIJKM ABBCCCDFIJKM ABBCCCDDEFFJK)
+      .sample
+      .split("")
+      .map{|piece|Object.const_get("GridLock::Pieces::#{piece}")}
+  end
+
   module Pieces
 
     All = [
@@ -45,6 +52,7 @@ module GridLock
       N = [[SQUARE, CROSS ], CIRCLE]
 
     ]
+
 
     def self.multidimensional? piece
       piece[0].is_a?(Array)
@@ -89,17 +97,17 @@ module GridLock
     end
 
     def cursor_hover? x, y
-      @cursor_hover[[x,y]]
+      @cursor_hover[[x,y]] == true
     end
 
     def each_symbol_of piece
-      piece.each_with_index do |symbol, i|
+      piece.each_with_index do |symbol, y|
         if symbol.is_a? Array
-          symbol.each_with_index do |_symbol,j|
-            yield _symbol, i, j
+          symbol.each_with_index do |_symbol,x|
+            yield _symbol, y, x
           end
         else
-          yield symbol, 0, i
+          yield symbol, 0, y
         end
       end
     end
@@ -126,6 +134,7 @@ module GridLock
     end
 
     def print_for(piece)
+      return unless piece
       if piece.any?{|e|e.is_a?(Array)}
         if piece[0][0] == nil
           [piece[0].join("\n"),piece[1]]
@@ -145,29 +154,29 @@ module GridLock
     end
 
     def finished?
+      @fill.map{|row|row.count {|col|col == true}}.inject(:+) == @fill.length * @fill[0].length
     end
 
     def fit? piece, x=0, y=0
+      puts "no piece" and return false unless piece
       hover(x,y) do
         puts "\e[H\e[2J \n Loop: #{@lookups+=1}, (#{x},#{y})\n",
-          print_for(piece),nil,nil
-          each_symbol_of(piece) do |symbol, _x, _y|
-            print symbol || "  "
-            print "  "
-          end
+          print_for(piece)
           print_game
-          sleep 1
+          sleep 0.01
           each_symbol_of piece do |_, i,j|
+            return false if x+i > @fill.length - 1
             return false if @fill[x+i][y+j]
           end
           return false unless match?(piece, x, y)
-          true
+          return true
       end
     end
 
     def put! piece, x, y
-      return false unless fit? piece, x, y
+      raise "piece: #{piece.inspect} does not fit on #{x}, #{y}" unless fit? piece, x, y
       each_symbol_of piece do |_, i,j|
+        puts "fill(#{x+i}, #{y+j})"
         fill(x+i, y+j)
       end
       true
@@ -179,11 +188,10 @@ module GridLock
         line.each_with_index.map do |spot, column_index|
           if spot_busy?(line_index, column_index)
             print spot.red
-          end
-          if cursor_hover?(line_index, column_index)
+          elsif cursor_hover?(line_index, column_index)
             print spot.purple
           else 
-            print spot
+            print spot.green
           end
           print(" ") if column_index < line.size-1
         end
