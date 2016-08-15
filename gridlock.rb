@@ -186,26 +186,8 @@ module GridLock
             return false if @fill[x+i][y+j]
           end
           return false unless match?(piece, x, y)
-          each_symbol_of piece do |_, i,j|
-            if filled_around?(x+i, y+j)
-              return false
-            end
-          end
           return true
       end
-    end
-
-    def around x, y
-    [
-      ([x + 1, y]     if x < width - 1),
-      ([x,     y + 1] if y < height - 1),
-      ([x - 1, y]     if x > 0),
-      ([x,     y - 1] if y > 0),
-      ].compact
-    end
-
-    def filled_around? x, y
-      around(x, y).all?{|(_x,_y)| @fill[_x][_y] }
     end
 
     def put! piece, x, y
