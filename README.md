@@ -10,4 +10,6 @@ Challenge yourself and write a strategy to solve it!
 
 [![asciicast](https://asciinema.org/a/79433.png)](https://asciinema.org/a/79433)
 
-My own is now working at all :tophat: :rabbit:.
+[See more about](http://ideia.me/ruby-puzzle-gridlock/)
+
+
