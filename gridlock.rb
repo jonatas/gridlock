@@ -87,9 +87,16 @@ module GridLock
 
     def initialize
       @status = "started"
-      @fill = Array.new(GridLock::Board.length) { Array.new(GridLock::Board[0].length, false) }
-      @cursor_hover = {}
+      @width = GridLock::Board[0].length
+      @height = GridLock::Board.length
+      @cursor_x = 0
+      @cursor_y = 0
+      @fill = array_board
+      @cursor_hover = array_board
       @lookups = 0
+    end
+    def array_board
+      Array.new(@height) { Array.new(@width, false) }
     end
 
     def spot_busy? x, y
@@ -97,7 +104,7 @@ module GridLock
     end
 
     def cursor_hover? x, y
-      @cursor_hover[[x,y]] == true
+      @cursor_hover[x][y] == true
     end
 
     def each_symbol_of piece
@@ -148,13 +155,23 @@ module GridLock
       end.to_s + " \n\n" + piece.inspect + "\n\n"
     end
     def hover(x,y)
-      @cursor_hover[[x,y]] = true
+      @cursor_hover[@cursor_x][@cursor_y] = false
+      @cursor_x = x
+      @cursor_y = y
+      @cursor_hover[@cursor_x][@cursor_y] = true
       yield
-      @cursor_hover[[x,y]] = false
     end
 
     def finished?
       @fill.map{|row|row.count {|col|col == true}}.inject(:+) == @fill.length * @fill[0].length
+    end
+
+    def width
+      @fill[0].size
+    end
+
+    def height
+      @fill.size
     end
 
     def fit? piece, x=0, y=0
@@ -165,18 +182,35 @@ module GridLock
           print_game
           sleep 0.01
           each_symbol_of piece do |_, i,j|
-            return false if x+i > @fill.length - 1
+            return false if x+i > width
             return false if @fill[x+i][y+j]
           end
           return false unless match?(piece, x, y)
+          each_symbol_of piece do |_, i,j|
+            if filled_around?(x+i, y+j)
+              return false
+            end
+          end
           return true
       end
+    end
+
+    def around x, y
+    [
+      ([x + 1, y]     if x < width - 1),
+      ([x,     y + 1] if y < height - 1),
+      ([x - 1, y]     if x > 0),
+      ([x,     y - 1] if y > 0),
+      ].compact
+    end
+
+    def filled_around? x, y
+      around(x, y).all?{|(_x,_y)| @fill[_x][_y] }
     end
 
     def put! piece, x, y
       raise "piece: #{piece.inspect} does not fit on #{x}, #{y}" unless fit? piece, x, y
       each_symbol_of piece do |_, i,j|
-        puts "fill(#{x+i}, #{y+j})"
         fill(x+i, y+j)
       end
       true
