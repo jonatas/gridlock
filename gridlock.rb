@@ -42,17 +42,16 @@ module GridLock
       E = [SQUARE, SQUARE],
       F = [CIRCLE, CIRCLE],
 
-      G = [[SQUARE, CIRCLE], SQUARE],
-      H = [[CROSS,  CIRCLE], SQUARE],
-      I = [[CIRCLE, SQUARE], CROSS ],
-      J = [[CROSS,  CROSS ], SQUARE],
-      K = [[CIRCLE, CIRCLE], SQUARE],
-      L = [[SQUARE, CIRCLE], CIRCLE],
-      M = [[CROSS,  SQUARE], CIRCLE],
-      N = [[SQUARE, CROSS ], CIRCLE]
+      G = [[SQUARE,CIRCLE], SQUARE],
+      H = [[CROSS, CIRCLE], SQUARE],
+      I = [[CIRCLE,SQUARE], CROSS ],
+      J = [[CROSS ,CROSS ], SQUARE],
+      K = [[CIRCLE,CIRCLE], SQUARE],
+      L = [[CIRCLE,SQUARE], CIRCLE],
+      M = [[CROSS, SQUARE], CIRCLE],
+      N = [[SQUARE, CROSS], CIRCLE]
 
     ]
-
 
     def self.multidimensional? piece
       piece[0].is_a?(Array)
@@ -62,13 +61,12 @@ module GridLock
       if multidimensional? piece
         if piece[1][1] || piece[0][1]
           [[piece[1][0], piece[0][0]],
-           [piece[1][1], piece[0][1]]]
-
+           [piece[1][1], piece[0][1]]] 
         else
           [piece[1][0], piece[0][0]]
         end
       else
-        [[piece[0]],[piece[1]]]
+        [[piece[0],nil],[piece[1],nil]]
       end
     end
   end
@@ -87,8 +85,8 @@ module GridLock
 
     def initialize
       @status = "started"
-      @width = GridLock::Board[0].length
-      @height = GridLock::Board.length
+      @cols = GridLock::Board[0].length
+      @lines = GridLock::Board.length
       @cursor_x = 0
       @cursor_y = 0
       @fill = array_board
@@ -96,7 +94,7 @@ module GridLock
       @lookups = 0
     end
     def array_board
-      Array.new(@height) { Array.new(@width, false) }
+      Array.new(@lines) { Array.new(@cols, false) }
     end
 
     def spot_busy? x, y
@@ -107,14 +105,14 @@ module GridLock
       @cursor_hover[x][y] == true
     end
 
-    def each_symbol_of piece
+    def each_symbol_of piece, &block
       piece.each_with_index do |symbol, y|
         if symbol.is_a? Array
           symbol.each_with_index do |_symbol,x|
-            yield _symbol, y, x
+            block.call _symbol, y, x if _symbol
           end
         else
-          yield symbol, 0, y
+          block.call symbol, 0, y if symbol
         end
       end
     end
@@ -166,28 +164,28 @@ module GridLock
       @fill.map{|row|row.count {|col|col == true}}.inject(:+) == @fill.length * @fill[0].length
     end
 
-    def width
-      @fill[0].size
-    end
-
-    def height
-      @fill.size
-    end
-
     def fit? piece, x=0, y=0
       puts "no piece" and return false unless piece
+
+      fit = true
       hover(x,y) do
         puts "\e[H\e[2J \n Loop: #{@lookups+=1}, (#{x},#{y})\n",
           print_for(piece)
           print_game
           sleep 0.01
-          each_symbol_of piece do |_, i,j|
-            return false if x+i > width
-            return false if @fill[x+i][y+j]
+          each_symbol_of piece do |_sym, x_1, y_1|
+            if @fill[x+x_1][y+y_1]
+              puts "filled" 
+              fit = false 
+              break 
+            end
           end
-          return false unless match?(piece, x, y)
-          return true
+          unless match?(piece, x, y)
+            fit = false 
+            puts "match"
+          end
       end
+      fit
     end
 
     def put! piece, x, y

@@ -39,6 +39,9 @@ module GridLock
       p game
     end
   end
+rescue
+  puts "game finished? #{game.finished?}"
+  p game
 end
 
 GridLock::Solver.run
