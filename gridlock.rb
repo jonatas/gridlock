@@ -106,13 +106,13 @@ module GridLock
     end
 
     def each_symbol_of piece, &block
-      piece.each_with_index do |symbol, y|
+      piece.each_with_index do |symbol, x|
         if symbol.is_a? Array
-          symbol.each_with_index do |_symbol,x|
-            block.call _symbol, y, x if _symbol
+          symbol.each_with_index do |_symbol,y|
+            block.call _symbol, x, y if _symbol
           end
         else
-          block.call symbol, 0, y if symbol
+          block.call symbol, 0, x if symbol
         end
       end
     end
@@ -120,8 +120,12 @@ module GridLock
     def match? piece, x, y
       debug "match? #{piece.inspect}, #{x}, #{y}"
       each_symbol_of(piece) do |symbol, i, j|
+        if x + i > @lines || y + j >  @cols
+          debug "#{x} + #{i} > #{@lines} || #{y} + #{j} > #{@cols}"
+          return false
+        end
         expected_symbol = GridLock::Board[x+i][y+j]
-        debug "#{x}:#{y} - #{i}:#{j} #{expected_symbol} != <#{symbol}"
+        debug "#{x}:#{y} - #{i}:#{j} #{expected_symbol} != #{symbol} # => #{symbol != expected_symbol }"
         if symbol != expected_symbol
           return false
         end
@@ -152,6 +156,7 @@ module GridLock
         piece.join(" ") + "\n"
       end.to_s + " \n\n" + piece.inspect + "\n\n"
     end
+
     def hover(x,y)
       @cursor_hover[@cursor_x][@cursor_y] = false
       @cursor_x = x
@@ -173,7 +178,7 @@ module GridLock
           print_game
           sleep 0.01
           each_symbol_of piece do |_sym, x_1, y_1|
-            if @fill[x+x_1][y+y_1]
+            if x+x_1 > @cols || y+y_1 > @lines || @fill[x+x_1][y+y_1]
               fit = false 
               break 
             end
@@ -186,7 +191,7 @@ module GridLock
     end
 
     def put! piece, x, y
-      raise "piece: #{piece.inspect} does not fit on #{x}, #{y}" unless fit? piece, x, y
+      fail "piece: #{piece.inspect} does not fit on #{x}, #{y}" unless fit? piece, x, y
       each_symbol_of piece do |_, i,j|
         fill(x+i, y+j)
       end

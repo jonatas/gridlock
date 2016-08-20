@@ -81,6 +81,7 @@ RSpec.describe GridLock do
     let(:cross_circle) {  [GridLock::CROSS, GridLock::CIRCLE] }
     let(:rotated_cross_circle) {GridLock::Pieces.rotate(cross_circle)}
     let(:square_cross_circle) { [[GridLock::SQUARE, GridLock::CROSS], [GridLock::CIRCLE]] }
+    let(:rotated_square_cross_circle) { GridLock::Pieces.rotate(square_cross_circle) }
 
     it "print" do
       expect { game.print_game(false) }.to output( %{
@@ -102,6 +103,7 @@ RSpec.describe GridLock do
       it { expect(game.match?(rotated_cross_circle, 4, 0)).to be_truthy}
       it { expect(game.match?(rotated_cross_circle, 4, 2)).to be_truthy}
       it { expect(game.match?(rotated_cross_circle, 4, 1)).to be_falsy}
+      it { expect(game.match?(rotated_square_cross_circle, 1, 0)).to be_truthy}
     end
 
     context ".fit?" do
@@ -121,10 +123,9 @@ RSpec.describe GridLock do
 
     context "put!(piece, *position)" do
       it "fill piece positions" do
-        game.print_game
         expect(game.put!(cross_circle, 2,1)).to be_truthy
-        game.print_game
-        expect { game.put!(cross_circle, 2,1) }.to raise_error
+        expect(game.fit?(cross_circle, 2,1)).to be_falsy
+        expect { game.put!(cross_circle, 2,1) }.to raise_error(RuntimeError, 'piece: ["✚", "◯"] does not fit on 2, 1')
       end
     end
   end
