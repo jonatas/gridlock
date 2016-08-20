@@ -27,8 +27,8 @@ RSpec.describe GridLock do
 
       it "90º" do
         expect(rotated_1).to eq( [
-          [GridLock::CROSS],
-          [GridLock::CIRCLE]
+          [GridLock::CROSS, nil],
+          [GridLock::CIRCLE, nil]
         ])
       end 
 
@@ -36,8 +36,8 @@ RSpec.describe GridLock do
 
       it "270º" do
         expect(rotated_3).to eq( [
-          [GridLock::CIRCLE],
-          [GridLock::CROSS]
+          [GridLock::CIRCLE, nil],
+          [GridLock::CROSS, nil ]
         ])
       end
       it("360º is eq 0º"){  expect(rotated_4).to eq( piece ) }
@@ -83,7 +83,7 @@ RSpec.describe GridLock do
     let(:square_cross_circle) { [[GridLock::SQUARE, GridLock::CROSS], [GridLock::CIRCLE]] }
 
     it "print" do
-      expect { game.print_game }.to output( %{Game started
+      expect { game.print_game(false) }.to output( %{
 ▢ ✚ ◯ ◯
 ◯ ▢ ▢ ✚
 ✚ ✚ ◯ ✚
@@ -124,7 +124,7 @@ RSpec.describe GridLock do
         game.print_game
         expect(game.put!(cross_circle, 2,1)).to be_truthy
         game.print_game
-        expect(game.put!(cross_circle, 2,1)).to be_falsy
+        expect { game.put!(cross_circle, 2,1) }.to raise_error
       end
     end
   end

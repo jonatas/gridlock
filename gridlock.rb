@@ -165,8 +165,7 @@ module GridLock
     end
 
     def fit? piece, x=0, y=0
-      puts "no piece" and return false unless piece
-
+      return false unless piece
       fit = true
       hover(x,y) do
         puts "\e[H\e[2J \n Loop: #{@lookups+=1}, (#{x},#{y})\n",
@@ -175,14 +174,12 @@ module GridLock
           sleep 0.01
           each_symbol_of piece do |_sym, x_1, y_1|
             if @fill[x+x_1][y+y_1]
-              puts "filled" 
               fit = false 
               break 
             end
           end
           unless match?(piece, x, y)
             fit = false 
-            puts "match"
           end
       end
       fit
@@ -196,16 +193,20 @@ module GridLock
       true
     end
 
-    def print_game
+    def print_game color=true
       print "\n"
       GridLock::Board.each_with_index.map do |line, line_index|
         line.each_with_index.map do |spot, column_index|
-          if spot_busy?(line_index, column_index)
-            print spot.red
-          elsif cursor_hover?(line_index, column_index)
-            print spot.purple
-          else 
-            print spot.green
+          if color
+            if spot_busy?(line_index, column_index)
+              print spot.red
+            elsif cursor_hover?(line_index, column_index)
+              print spot.purple
+            else 
+              print spot.green
+            end
+          else
+            print spot
           end
           print(" ") if column_index < line.size-1
         end
