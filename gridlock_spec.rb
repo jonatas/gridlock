@@ -121,6 +121,24 @@ RSpec.describe GridLock do
       end
     end
 
+
+    context ".navigate" do
+      before do
+        game.instance_variable_set("@lines", 2)
+        game.instance_variable_set("@cols", 3)
+      end
+      specify { expect { |b| game.navigate(&b) }.to yield_successive_args([0, 0], [0, 1], [0,2], [1, 0], [1, 1], [1, 2]) }
+    end
+
+    context "around" do
+      specify { expect(game.around(0,0)).to eq([[0, 1], [1, 0]]) }
+      specify { expect(game.around(0,1)).to eq([[0, 0], [0, 2], [1, 1]]) }
+      specify { expect(game.around(1,1)).to eq([[0, 1], [1, 0], [1, 2], [2, 1]]) }
+      specify { expect(game.around(3,5)).to eq([[2, 5], [3, 4], [3, 6]]) }
+      specify { expect(game.around(2,6)).to eq([[1, 6], [2, 5], [3, 6]]) }
+      specify { expect(game.around(3,6)).to eq([[2, 6], [3, 5]]) }
+    end
+
     context "put!(piece, *position)" do
       it "fill piece positions" do
         expect(game.put!(cross_circle, 2,1)).to be_truthy

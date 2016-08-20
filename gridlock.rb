@@ -93,6 +93,7 @@ module GridLock
       @cursor_hover = array_board
       @lookups = 0
     end
+
     def array_board
       Array.new(@lines) { Array.new(@cols, false) }
     end
@@ -115,6 +116,26 @@ module GridLock
           block.call symbol, 0, x if symbol
         end
       end
+    end
+
+    def navigate
+      (0...@lines).each do |x|
+        (0...@cols).each do |y|
+          yield x, y
+        end
+      end
+    end
+
+    def around x, y
+      [
+        ([x-1, y] if x > 0),
+        ([x, y-1] if y > 0),
+        ([x, y+1] if y+1 < @lines),
+        ([x+1, y] if x+1 < @cols),
+      ].compact
+    end
+
+    def enclosures
     end
 
     def match? piece, x, y
