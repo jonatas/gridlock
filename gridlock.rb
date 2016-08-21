@@ -150,15 +150,16 @@ module GridLock
       found
     end
 
-    def match? piece, x, y
-      debug "match? #{piece.inspect}, #{x}, #{y}"
+    def match? piece, row, y
+      debug "match? #{piece.inspect}, row: #{row}, col: #{y}"
       each_symbol_of(piece) do |symbol, i, j|
-        if x + i > @cols || y + j > @lines
-          debug "#{x} + #{i} > #{@lines} || #{y} + #{j} > #{@cols}"
+        debug "> match? #{symbol}, i: #{i}, j: #{j}"
+        if row + i > @lines || y + j > @cols
+          debug "#{row} + #{i} > #{@cols} || #{y} + #{j} > #{@lines}"
           return false
         end
-        expected_symbol = GridLock::Board[x+i][y+j]
-        debug "#{x}:#{y} - #{i}:#{j} #{expected_symbol} != #{symbol} # => #{symbol != expected_symbol }"
+        expected_symbol = GridLock::Board[row+i][y+j]
+        debug "#{row}:#{y} - #{i}:#{j} #{expected_symbol} != #{symbol} # => #{symbol != expected_symbol }"
         if symbol != expected_symbol
           return false
         end
