@@ -1,16 +1,20 @@
 require "./gridlock"
 
+class Array
+  def sample!
+    delete_at rand length
+  end
+end
 module GridLock
   class Solver
 
     def self.run
       game = GridLock::Game.new
       game.print_game
-      rotated = 0
       accepted = false 
       pieces = GridLock.ramdom_solution
       while !game.finished?
-        piece = pieces.pop
+        piece = pieces.sample!
         if piece.nil?
           puts "pieces is over \o/ but game finished? #{game.finished?}"
           break
