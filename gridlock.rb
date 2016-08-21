@@ -100,7 +100,7 @@ module GridLock
       Array.new(@rows) { Array.new(@cols, false) }
     end
 
-    def spot_busy? col, row
+    def spot_busy? row, col
       @fill[row][col]
     end
 
@@ -150,14 +150,14 @@ module GridLock
 
     def enclosures
       navigate do |col, row|
-        next if spot_busy? col, row
+        next if spot_busy? row, col
         [col,row] if enclosured? col, row
       end
     end
 
     def enclosured? col, row
       debug "enclosured?: #{col}:#{row}: #{around(col, row).inspect}"
-      found = around(col, row).all?{|(_col,_row)| debug("spot_busy?(#{_col},#{_row}) # => #{busy=spot_busy?(_col,_row)}"); busy}
+      found = around(col, row).all?{|(_col,_row)| debug("spot_busy?(#{_row},#{_col}) # => #{busy=spot_busy?(_row,_col)}"); busy}
       debug "? #{col}:#{row}: #{found}"
       found
     end
@@ -215,7 +215,7 @@ module GridLock
         print_game
         sleep 0.01
         each_symbol_of piece do |_sym, _col, _row|
-          if col+_col > @cols || row+_row > @rows || spot_busy?(col, row)
+          if col+_col > @cols || row+_row > @rows || spot_busy?(row, col)
             fit = false 
             break 
           end
@@ -233,7 +233,7 @@ module GridLock
       each_symbol_of piece do |_, i,j|
         _col, _row = col+i, row+j
         fill(_row, col)
-        @history.last << [_col, _row]
+        @history.last << [_row, _col]
       end
       enclosured_points = enclosures
       unless enclosured_points.empty?
@@ -245,8 +245,8 @@ module GridLock
     def undo
       raise GameError, "History empty! Nothing to undo." if @history.empty?
       action = @history.pop
-      action.each do |(col, row)|
-        take_out col, row
+      action.each do |(row, col)|
+        take_out row, col
       end
     end
 
@@ -280,12 +280,12 @@ module GridLock
     end
 
     def fill row, col
-      raise GameError, "spot busy: #{col}, #{row}" if spot_busy? col, row
+      raise GameError, "Can't fill. Spot busy on row: #{row}, col: #{col}" if spot_busy? row, col
       @fill[row][col] = true
     end
 
-    def take_out col, row
-      raise GameError, "nothing to take out on #{col}, #{row}" unless spot_busy? col, row
+    def take_out row, col
+      raise GameError, "Can't take out. Spot empty on row: #{row}, col: #{col}" unless spot_busy? row, col
       @fill[row][col] = false
     end
   end
