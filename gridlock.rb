@@ -212,10 +212,10 @@ module GridLock
       return false unless piece
       fit = true
       hover(row, col) do
-        puts "\e[H\e[2J \n Loop: #{@lookups+=1}, (#{col},#{row})\n", print_for(piece)
+        puts "\e[H\e[2J \n Loop: #{@lookups+=1}, (row: #{row}, col: #{col})\n", print_for(piece)
         print_game
         sleep 0.01
-        each_symbol_of piece do |_sym, _col, _row|
+        each_symbol_of piece do |_sym, _row, _col|
           if col+_col > @cols || row+_row > @rows || spot_busy?(row, col)
             fit = false 
             break 
