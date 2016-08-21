@@ -89,7 +89,7 @@ module GridLock
     def initialize
       @status = "started"
       @cols = GridLock::Board[0].length
-      @lines = GridLock::Board.length
+      @rows = GridLock::Board.length
       @fill = array_board
       @cursor_hover = array_board
       @lookups = 0
@@ -97,15 +97,15 @@ module GridLock
     end
 
     def array_board
-      Array.new(@lines) { Array.new(@cols, false) }
+      Array.new(@rows) { Array.new(@cols, false) }
     end
 
-    def spot_busy? x, y
-      @fill[x][y]
+    def spot_busy? col, row
+      @fill[row][col]
     end
 
-    def cursor_hover? x, y
-      @hover == [x, y]
+    def cursor_hover? col, row
+      @hover == [col, row]
     end
     def simple? piece
       piece.length == 2 &&
@@ -113,80 +113,81 @@ module GridLock
     end
 
     def each_symbol_of piece, &block
-      piece.each_with_index do |symbol, x|
+      piece.each_with_index do |symbol, i|
         if symbol.is_a? Array
           symbol.each_with_index do |_symbol,y|
-            block.call _symbol, x, y if _symbol
+            block.call _symbol, i, y if _symbol
           end
         elsif symbol
-            if simple? piece
-              block.call symbol, 0, x
-            else
-              block.call symbol, x, 0
-            end
+          if simple? piece
+            block.call symbol, 0, i
+          else
+            block.call symbol, i, 0
+          end
         end
       end
     end
 
     def navigate
       yields = []
-      (0...@lines).each do |y|
-        (0...@cols).each do |x|
-          yields << yield(x, y)
+      (0...@rows).each do |row|
+        (0...@cols).each do |col|
+          yields << yield(col, row)
         end
       end
       yields.compact
     end
 
-    def around x, y
-      debug "around(#{x},#{y}) ? if x+1 < @cols:: #{x+1} < #{@cols}) || if y+1 < @lines :: #{y+1} < #{@lines}"
+    def around col, row 
+      debug "around(#{col},#{row}) ? if col+1 < @cols:: #{col+1} < #{@cols}) || if row+1 < @rows :: #{row+1} < #{@rows}"
       [
-        ([x-1, y] if x > 0),
-        ([x, y-1] if y > 0),
-        ([x+1, y] if x+1 < @cols),
-        ([x, y+1] if y+1 < @lines),
+        ([col-1, row] if col > 0),
+        ([col, row-1] if row > 0),
+        ([col+1, row] if col+1 < @cols),
+        ([col, row+1] if row+1 < @rows),
       ].compact
     end
 
     def enclosures
-      navigate do |x, y|
-        next if spot_busy? x, y
-        [x,y] if enclosured? x, y
+      navigate do |col, row|
+        next if spot_busy? col, row
+        [col,row] if enclosured? col, row
       end
     end
 
-    def enclosured? x, y
-      debug "enclosured?: #{x}:#{y}: #{around(x, y).inspect}"
-      found = around(x, y).all?{|(_x,_y)|spot_busy?(_x,_y)}
-      debug "? #{x}:#{y}: #{found}"
+    def enclosured? col, row
+      debug "enclosured?: #{col}:#{row}: #{around(col, row).inspect}"
+      found = around(col, row).all?{|(_col,_row)| debug("spot_busy?(#{_col},#{_row}) # => #{busy=spot_busy?(_col,_row)}"); busy}
+      debug "? #{col}:#{row}: #{found}"
       found
     end
 
-    def match? piece, row, y
-      debug "match? #{piece.inspect}, row: #{row}, col: #{y}"
-      each_symbol_of(piece) do |symbol, i, j|
-        debug "> match? #{symbol}, i: #{i}, j: #{j}"
-        if row + i > @lines-1 || y + j > @cols-1
-          debug "#{row} + #{i} > #{@lines-1} || #{y} + #{j} > #{@cols-1}"
+    def match? piece, row, col
+      debug "match? #{piece.inspect}, row: #{row}, col: #{col}"
+      each_symbol_of(piece) do |symbol, _row, _col|
+        debug "> match? #{symbol}, _row: #{_row}, _col: #{_col}"
+        if row + _row > @rows-1 || col + _col > @cols-1
+          debug "Out of board: #{row} + #{_row} > #{@rows-1} || #{col} + #{_col} > #{@cols-1}"
           return false
         end
-        expected_symbol = GridLock::Board[row+i][y+j]
-        debug "#{row}:#{y} - #{i}:#{j} #{expected_symbol} != #{symbol} # => #{symbol != expected_symbol }"
+        expected_symbol = GridLock::Board[row+_row][col+_col]
         if symbol != expected_symbol
+          debug "#{row}:#{col} - #{_row}:#{_col} #{symbol} != #{expected_symbol}"
           return false
         end
+        debug "#{row}:#{col} - #{_row}:#{_col} #{symbol} == #{expected_symbol}"
       end
       return true
     end
 
-    def fill x, y
-      raise GameError, "spot busy: #{x}, #{y}" if spot_busy? x,y
-      @fill[x][y] = true
+    def fill col, row
+      raise GameError, "spot busy: #{col}, #{row}" if spot_busy? col, row
+      @fill[row][col] = true
     end
 
-    def take_out x, y
-      raise GameError, "nothing to take out on #{x}, #{y}" unless spot_busy? x, y
-      @fill[x][y] = false
+    def take_out col, row
+      raise GameError, "nothing to take out on #{col}, #{row}" unless spot_busy? col, row
+      @fill[row][col] = false
     end
 
     def finished?
@@ -208,44 +209,40 @@ module GridLock
       end.to_s + " \n\n"
     end
 
-    def hover(x,y)
-      @hover = [x,y]
+    def hover(col, row)
+      @hover = [col, row]
       yield
       @hover = []
     end
 
-    def finished?
-      @fill.map{|row|row.count {|col|col == true}}.inject(:+) == @fill.length * @fill[0].length
-    end
 
-    def fit? piece, x=0, y=0
+    def fit? piece, col=0, row=0
       return false unless piece
       fit = true
-      hover(x,y) do
-        puts "\e[H\e[2J \n Loop: #{@lookups+=1}, (#{x},#{y})\n",
-          print_for(piece)
-          print_game
-          sleep 0.01
-          each_symbol_of piece do |_sym, x_1, y_1|
-            if x+x_1 > @cols || y+y_1 > @lines || @fill[x+x_1][y+y_1]
-              fit = false 
-              break 
-            end
-          end
-          unless match?(piece, x, y)
+      hover(col,row) do
+        puts "\e[H\e[2J \n Loop: #{@lookups+=1}, (#{col},#{row})\n", print_for(piece)
+        print_game
+        sleep 0.01
+        each_symbol_of piece do |_sym, _col, _row|
+          if col+_col > @cols || row+_row > @rows || spot_busy?(col, row)
             fit = false 
+            break 
           end
+        end
+        unless match?(piece, row, col)
+          fit = false 
+        end
       end
       fit
     end
 
-    def put! piece, x, y
-      raise GameError, "piece: #{piece.inspect} does not fit on #{x}, #{y}" unless fit? piece, x, y
+    def put! piece, col, row
+      raise GameError, "piece: #{piece.inspect} does not fit on row: #{row}, col: #{col}" unless fit? piece, col, row
       @history << []
       each_symbol_of piece do |_, i,j|
-        col, row = x+i, y+j
-        fill(col, row)
-        @history.last << [col, row]
+        _col, _row = col+i, row+j
+        fill(_col, _row)
+        @history.last << [_col, _row]
       end
       enclosured_points = enclosures
       unless enclosured_points.empty?
