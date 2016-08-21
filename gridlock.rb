@@ -205,7 +205,7 @@ module GridLock
         end.join("\n")
       else
         piece.join(" ") + "\n"
-      end.to_s + " \n\n" + piece.inspect + "\n\n"
+      end.to_s + " \n\n"
     end
 
     def hover(x,y)

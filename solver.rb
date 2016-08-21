@@ -13,6 +13,7 @@ module GridLock
       game.print_game
       accepted = false 
       pieces = GridLock.ramdom_solution
+      avoid = {}
       while !game.finished?
         piece = pieces.sample!
         if piece.nil?
@@ -21,6 +22,9 @@ module GridLock
         end
         (GridLock::Board.size).times do |x|
           (GridLock::Board[0].size).times do |y|
+            next if game.spot_busy? x, y
+            next if avoid[[piece,x,y]]
+            begin
             if game.fit? piece, x, y
               game.put! piece, x, y
               next
@@ -33,6 +37,14 @@ module GridLock
             elsif (r3= GridLock::Pieces.rotate(r2)) && game.fit?(r3, x, y)
               game.put! r3, x, y
               next
+            end
+            rescue GameError
+              puts "Ops! #{$!}"
+              game.print_game
+              sleep 2
+              game.undo
+              avoid[[piece,x,y]] = true
+              pieces << piece
             end
             return if game.finished?
           end
