@@ -1,5 +1,4 @@
 require "./gridlock"
-
 class Array
   def sample!
     delete_at rand length
@@ -20,8 +19,8 @@ module GridLock
           puts "pieces is over \o/ but game finished? #{game.finished?}"
           break
         end
-        (GridLock::Board.size).times do |x|
-          (GridLock::Board[0].size).times do |y|
+        (GridLock::Board[0].size).times do |x|
+          (GridLock::Board.size).times do |y|
             next if game.spot_busy? x, y
             next if avoid[[piece,x,y]]
             begin

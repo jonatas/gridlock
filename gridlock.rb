@@ -238,7 +238,7 @@ module GridLock
       end
       enclosured_points = enclosures
       unless enclosured_points.empty?
-        raise GameError, "#{piece.inspect} on row: #{row}, col: #{c} enclosures: #{enclosures.inspect}"
+        raise GameError, "#{piece.inspect} on row: #{row}, col: #{col} enclosures: #{enclosures.inspect}"
       end
       true
     end
