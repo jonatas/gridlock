@@ -180,15 +180,6 @@ module GridLock
       return true
     end
 
-    def fill col, row
-      raise GameError, "spot busy: #{col}, #{row}" if spot_busy? col, row
-      @fill[row][col] = true
-    end
-
-    def take_out col, row
-      raise GameError, "nothing to take out on #{col}, #{row}" unless spot_busy? col, row
-      @fill[row][col] = false
-    end
 
     def finished?
       @fill.all?{|row|row.all?&:true?}
@@ -241,7 +232,7 @@ module GridLock
       @history << []
       each_symbol_of piece do |_, i,j|
         _col, _row = col+i, row+j
-        fill(_col, _row)
+        fill(_row, col)
         @history.last << [_col, _row]
       end
       enclosured_points = enclosures
@@ -286,6 +277,16 @@ module GridLock
 
     def debug!
       @debug = true
+    end
+
+    def fill row, col
+      raise GameError, "spot busy: #{col}, #{row}" if spot_busy? col, row
+      @fill[row][col] = true
+    end
+
+    def take_out col, row
+      raise GameError, "nothing to take out on #{col}, #{row}" unless spot_busy? col, row
+      @fill[row][col] = false
     end
   end
 end

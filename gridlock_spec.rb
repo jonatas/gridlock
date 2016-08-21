@@ -142,9 +142,9 @@ RSpec.describe GridLock do
 
       context "complex" do
         before do
-          game.fill(3,0)
-          game.fill(2,1)
-          game.fill(3,2)
+          game.fill(0,3)
+          game.fill(1,2)
+          game.fill(2,3)
         end
         specify { game.print_game; expect(game.enclosured?(3,1)).to be_truthy }
         specify { expect(game.enclosured?(2,3)).to be_falsy  }
@@ -153,9 +153,9 @@ RSpec.describe GridLock do
 
       context "right side" do
         before do
-          game.fill(3,0)
-          game.fill(2,1)
-          game.fill(3,2)
+          game.fill(0,3)
+          game.fill(1,2)
+          game.fill(2,3)
           game.print_game
         end
         specify { expect(game.enclosured?(3,1)).to be_truthy }
