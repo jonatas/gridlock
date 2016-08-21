@@ -119,23 +119,37 @@ module GridLock
     end
 
     def navigate
+      yields = []
       (0...@lines).each do |x|
         (0...@cols).each do |y|
-          yield x, y
+          yields << yield(x, y)
         end
       end
+      yields.compact
     end
 
     def around x, y
+      debug "around(#{x},#{y}) ? if x+1 < @cols:: #{x+1} < #{@cols}) || if y+1 < @lines :: #{y+1} < #{@lines}"
       [
         ([x-1, y] if x > 0),
         ([x, y-1] if y > 0),
-        ([x, y+1] if y+1 < @lines),
         ([x+1, y] if x+1 < @cols),
+        ([x, y+1] if y+1 < @lines),
       ].compact
     end
 
     def enclosures
+      navigate do |x, y|
+        next if spot_busy? x, y
+        [x,y] if enclosured? x, y
+      end
+    end
+
+    def enclosured? x, y
+      debug "enclosured?: #{x}:#{y}: #{around(x, y).inspect}"
+      found = around(x, y).all?{|(_x,_y)|puts "#{_x}:#{_y}: #{spot_busy?(_x,_y)}"; spot_busy?(_x,_y)}
+      debug "? #{x}:#{y}: #{found}"
+      found
     end
 
     def match? piece, x, y

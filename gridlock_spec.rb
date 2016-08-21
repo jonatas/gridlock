@@ -121,6 +121,26 @@ RSpec.describe GridLock do
       end
     end
 
+    context "enclosures" do
+      before do
+        game.fill(0,1)
+        game.fill(1,0)
+      end
+
+      specify { expect(game.enclosures).to eq([[0,0]]) }
+      specify { expect(game.enclosured?(0,0)).to be_truthy }
+
+      context "complex" do
+        before do
+          game.fill(3,0)
+          game.fill(2,1)
+          game.fill(3,2)
+        end
+        specify { game.print_game; expect(game.enclosured?(3,1)).to be_truthy }
+        specify { expect(game.enclosured?(2,3)).to be_falsy  }
+        specify { expect(game.enclosured?(0,3)).to be_falsy  }
+      end
+    end
 
     context ".navigate" do
       before do
@@ -131,9 +151,10 @@ RSpec.describe GridLock do
     end
 
     context "around" do
-      specify { expect(game.around(0,0)).to eq([[0, 1], [1, 0]]) }
-      specify { expect(game.around(0,1)).to eq([[0, 0], [0, 2], [1, 1]]) }
-      specify { expect(game.around(1,1)).to eq([[0, 1], [1, 0], [1, 2], [2, 1]]) }
+      specify { expect(game.around(0,0)).to match_array([[0, 1], [1, 0]]) }
+      specify { expect(game.around(0,1)).to match_array([[0, 0], [0, 2], [1, 1]]) }
+      specify { expect(game.around(1,1)).to match_array([[0, 1], [1, 0], [1, 2], [2, 1]]) }
+      specify { expect(game.around(1,3)).to match_array([[0, 3], [1, 2], [2, 3], [1, 4]]) }
       specify { expect(game.around(3,5)).to eq([[2, 5], [3, 4], [3, 6]]) }
       specify { expect(game.around(2,6)).to eq([[1, 6], [2, 5], [3, 6]]) }
       specify { expect(game.around(3,6)).to eq([[2, 6], [3, 5]]) }
