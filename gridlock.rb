@@ -87,8 +87,6 @@ module GridLock
       @status = "started"
       @cols = GridLock::Board[0].length
       @lines = GridLock::Board.length
-      @cursor_x = 0
-      @cursor_y = 0
       @fill = array_board
       @cursor_hover = array_board
       @lookups = 0
@@ -103,7 +101,7 @@ module GridLock
     end
 
     def cursor_hover? x, y
-      @cursor_hover[x][y] == true
+      @hover == [x, y]
     end
 
     def each_symbol_of piece, &block
@@ -147,7 +145,7 @@ module GridLock
 
     def enclosured? x, y
       debug "enclosured?: #{x}:#{y}: #{around(x, y).inspect}"
-      found = around(x, y).all?{|(_x,_y)|puts "#{_x}:#{_y}: #{spot_busy?(_x,_y)}"; spot_busy?(_x,_y)}
+      found = around(x, y).all?{|(_x,_y)|spot_busy?(_x,_y)}
       debug "? #{x}:#{y}: #{found}"
       found
     end
@@ -155,7 +153,7 @@ module GridLock
     def match? piece, x, y
       debug "match? #{piece.inspect}, #{x}, #{y}"
       each_symbol_of(piece) do |symbol, i, j|
-        if x + i > @lines || y + j >  @cols
+        if x + i > @cols || y + j > @lines
           debug "#{x} + #{i} > #{@lines} || #{y} + #{j} > #{@cols}"
           return false
         end
@@ -193,11 +191,9 @@ module GridLock
     end
 
     def hover(x,y)
-      @cursor_hover[@cursor_x][@cursor_y] = false
-      @cursor_x = x
-      @cursor_y = y
-      @cursor_hover[@cursor_x][@cursor_y] = true
+      @hover = [x,y]
       yield
+      @hover = []
     end
 
     def finished?
@@ -229,6 +225,12 @@ module GridLock
       fail "piece: #{piece.inspect} does not fit on #{x}, #{y}" unless fit? piece, x, y
       each_symbol_of piece do |_, i,j|
         fill(x+i, y+j)
+      end
+      enclosured_points = enclosures
+      unless enclosured_points.empty?
+        debug!
+        print_game
+        fail "#{piece.inspect} on (#{x},#{y}) enclosures: #{enclosures.inspect}"
       end
       true
     end
