@@ -82,7 +82,7 @@ module GridLock
   ]
 
   class Game
-
+    attr_reader :history, :cols, :lines, :cursor_hover
     def initialize
       @status = "started"
       @cols = GridLock::Board[0].length
@@ -90,6 +90,7 @@ module GridLock
       @fill = array_board
       @cursor_hover = array_board
       @lookups = 0
+      @history = []
     end
 
     def array_board
@@ -172,6 +173,11 @@ module GridLock
       @fill[x][y] = true
     end
 
+    def take_out x, y
+      fail "nothing to take out on #{x}, #{y}" unless spot_busy? x, y
+      @fill[x][y] = false
+    end
+
     def finished?
       @fill.all?{|row|row.all?&:true?}
     end
@@ -224,8 +230,11 @@ module GridLock
 
     def put! piece, x, y
       fail "piece: #{piece.inspect} does not fit on #{x}, #{y}" unless fit? piece, x, y
+      @history << []
       each_symbol_of piece do |_, i,j|
-        fill(x+i, y+j)
+        col, row = x+i, y+j
+        fill(col, row)
+        @history.last << [col, row]
       end
       enclosured_points = enclosures
       unless enclosured_points.empty?
@@ -234,6 +243,14 @@ module GridLock
         fail "#{piece.inspect} on (#{x},#{y}) enclosures: #{enclosures.inspect}"
       end
       true
+    end
+
+    def undo
+      fail "History empty! Nothing to undo." if @history.empty?
+      action = @history.pop
+      action.each do |(col, row)|
+        take_out col, row
+      end
     end
 
     def print_game color=true
