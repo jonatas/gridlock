@@ -123,11 +123,11 @@ RSpec.describe GridLock do
       end
 
       it 'false when symbol does not match on position' do
-        expect(game.fit?(cross_circle, 2,0)).to be_falsy
+        expect(game.fit?(cross_circle, 0,2)).to be_falsy
       end
 
       it 'when spot is free and match the position' do
-        expect(game.fit?(cross_circle, 1,2)).to be_truthy
+        expect(game.fit?(cross_circle, 2,1)).to be_truthy
       end
     end
 
@@ -146,7 +146,7 @@ RSpec.describe GridLock do
           game.fill(1,2)
           game.fill(2,3)
         end
-        specify { game.print_game; expect(game.enclosured?(3,1)).to be_truthy }
+        specify { game.print_game; expect(game.enclosured?(1,3)).to be_truthy }
         specify { expect(game.enclosured?(2,3)).to be_falsy  }
         specify { expect(game.enclosured?(0,3)).to be_falsy  }
       end
@@ -158,7 +158,7 @@ RSpec.describe GridLock do
           game.fill(2,3)
           game.print_game
         end
-        specify { expect(game.enclosured?(3,1)).to be_truthy }
+        specify { expect(game.enclosured?(1,3)).to be_truthy }
       end
     end
 
@@ -168,25 +168,25 @@ RSpec.describe GridLock do
         game.instance_variable_set("@cols", 3)
       end
       specify { expect { |b| game.navigate(&b) }
-        .to yield_successive_args([0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1]) }
+        .to yield_successive_args([0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]) }
     end
 
     context "around" do
       specify { expect(game.around(0,0)).to match_array([[0, 1], [1, 0]]) }
-      specify { expect(game.around(0,1)).to match_array([[0, 0], [0, 2], [1, 1]]) }
+      specify { expect(game.around(1,0)).to match_array([[0, 0], [2, 0], [1, 1]]) }
       specify { expect(game.around(1,1)).to match_array([[0, 1], [1, 0], [1, 2], [2, 1]]) }
-      specify { expect(game.around(1,3)).to match_array([[0, 3], [1, 2], [2, 3], [1, 4]]) }
-      specify { expect(game.around(3,5)).to eq([[2, 5], [3, 4], [3, 6]]) }
-      specify { expect(game.around(2,6)).to eq([[1, 6], [2, 5], [3, 6]]) }
-      specify { expect(game.around(3,6)).to eq([[2, 6], [3, 5]]) }
-      specify { expect(game.around(0,3)).to eq([[0, 2], [1, 3], [0, 4]]) }
+      specify { expect(game.around(3,1)).to match_array([[3, 0], [2, 1], [3, 2], [4, 1]]) }
+      specify { expect(game.around(5,3)).to match_array([[5, 2], [4, 3], [6, 3]]) }
+      specify { expect(game.around(6,2)).to match_array([[6, 1], [5, 2], [6, 3]]) }
+      specify { expect(game.around(6,3)).to eq([[6, 2], [5, 3]]) }
+      specify { expect(game.around(3,0)).to eq([[2, 0], [3, 1], [4, 0]]) }
     end
 
-    context "put!(piece, *position)" do
+    context "put!(piece, row, col)" do
       it "fill piece positions" do
-        expect(game.put!(cross_circle, 1,2)).to be_truthy
-        expect(game.fit?(cross_circle, 1,2)).to be_falsy
-        expect { game.put!(cross_circle, 1,2) }.to raise_error(GridLock::GameError, 'piece: ["✚", "◯"] does not fit on row: 2, col: 1')
+        expect(game.put!(cross_circle, 2,1)).to be_truthy
+        expect(game.fit?(cross_circle, 2,1)).to be_falsy
+        expect { game.put!(cross_circle, 2,1) }.to raise_error(GridLock::GameError, 'piece: ["✚", "◯"] does not fit on row: 2, col: 1')
       end
 
       specify do
@@ -194,11 +194,11 @@ RSpec.describe GridLock do
       end
 
       specify do
-        expect{ game.put!(cross_circle, 1,2) }.to change(game.history,:length).from(0).to(1)
+        expect{ game.put!(cross_circle, 2,1) }.to change(game.history,:length).from(0).to(1)
       end
 
       specify do
-        game.put!(cross_circle, 1, 2)
+        game.put!(cross_circle, 2, 1)
         game.print_game
         expect(game.spot_busy?(2,1)).to be_truthy
         expect(game.spot_busy?(3,1)).to be_truthy

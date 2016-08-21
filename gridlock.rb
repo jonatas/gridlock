@@ -133,33 +133,33 @@ module GridLock
       yields = []
       (0...@rows).each do |row|
         (0...@cols).each do |col|
-          yields << yield(col, row)
+          yields << yield(row, col)
         end
       end
       yields.compact
     end
 
-    def around col, row 
-      debug "around(#{col},#{row}) ? if col+1 < @cols:: #{col+1} < #{@cols}) || if row+1 < @rows :: #{row+1} < #{@rows}"
+    def around row, col
+      debug "around(#{row},#{col}) ? if col+1 < @cols:: #{col+1} < #{@cols}) || if row+1 < @rows :: #{row+1} < #{@rows}"
       [
-        ([col-1, row] if col > 0),
-        ([col, row-1] if row > 0),
-        ([col+1, row] if col+1 < @cols),
-        ([col, row+1] if row+1 < @rows),
+        ([row, col-1] if col > 0),
+        ([row-1, col] if row > 0),
+        ([row, col+1] if col+1 < @cols),
+        ([row+1, col] if row+1 < @rows),
       ].compact
     end
 
     def enclosures
-      navigate do |col, row|
+      navigate do |row, col|
         next if spot_busy? row, col
-        [col,row] if enclosured? col, row
+        [row, col] if enclosured? row, col
       end
     end
 
-    def enclosured? col, row
-      debug "enclosured?: #{col}:#{row}: #{around(col, row).inspect}"
-      found = around(col, row).all?{|(_col,_row)| debug("spot_busy?(#{_row},#{_col}) # => #{busy=spot_busy?(_row,_col)}"); busy}
-      debug "? #{col}:#{row}: #{found}"
+    def enclosured? row, col
+      debug "enclosured?: row: #{row}, col: #{col} #{around(row, col).inspect}"
+      found = around(row, col).all?{|(_row,_col)| debug("spot_busy?(#{_row},#{_col}) # => #{busy=spot_busy?(_row,_col)}"); busy}
+      debug "? row: #{row}, col: #{col}, found enclosured?: #{found}"
       found
     end
 
@@ -208,7 +208,7 @@ module GridLock
     end
 
 
-    def fit? piece, col=0, row=0
+    def fit? piece, row=0, col=0
       return false unless piece
       fit = true
       hover(row, col) do
@@ -228,17 +228,17 @@ module GridLock
       fit
     end
 
-    def put! piece, col, row
-      raise GameError, "piece: #{piece.inspect} does not fit on row: #{row}, col: #{col}" unless fit? piece, col, row
+    def put! piece, row, col
+      raise GameError, "piece: #{piece.inspect} does not fit on row: #{row}, col: #{col}" unless fit? piece, row, col
       @history << []
       each_symbol_of piece do |_, i,j|
         _col, _row = col+i, row+j
-        fill(_row, col)
+        fill(_row, _col)
         @history.last << [_row, _col]
       end
       enclosured_points = enclosures
       unless enclosured_points.empty?
-        raise GameError, "#{piece.inspect} on (#{x},#{y}) enclosures: #{enclosures.inspect}"
+        raise GameError, "#{piece.inspect} on row: #{row}, col: #{c} enclosures: #{enclosures.inspect}"
       end
       true
     end
