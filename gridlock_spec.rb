@@ -106,6 +106,12 @@ RSpec.describe GridLock do
       it { expect(game.match?(rotated_square_cross_circle, 1, 0)).to be_truthy}
     end
 
+    context ".each_symbol_of" do
+      specify { expect { |b| game.each_symbol_of(["a","b"], &b) }.to yield_successive_args(["a",0, 0], ["b",0, 1]) }
+      specify { expect { |b| game.each_symbol_of([["a",nil],["b",nil]], &b) }.to yield_successive_args(["a",0, 0], ["b", 1, 0]) }
+      specify { expect { |b| game.each_symbol_of([["a",nil],["b","c"]], &b) }.to yield_successive_args(["a",0, 0], ["b", 1, 0], ["c", 1, 1]) }
+    end
+
     context ".fit?" do
       it 'false when filled' do
         game.fill(0,0)
