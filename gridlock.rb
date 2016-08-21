@@ -104,9 +104,10 @@ module GridLock
       @fill[row][col]
     end
 
-    def cursor_hover? col, row
-      @hover == [col, row]
+    def cursor_hover? row, col
+      @hover == [row, col]
     end
+
     def simple? piece
       piece.length == 2 &&
         piece.none?{|e|e.is_a?Array}
@@ -200,8 +201,8 @@ module GridLock
       end.to_s + " \n\n"
     end
 
-    def hover(col, row)
-      @hover = [col, row]
+    def hover(row, col)
+      @hover = [row, col]
       yield
       @hover = []
     end
@@ -210,7 +211,7 @@ module GridLock
     def fit? piece, col=0, row=0
       return false unless piece
       fit = true
-      hover(col,row) do
+      hover(row, col) do
         puts "\e[H\e[2J \n Loop: #{@lookups+=1}, (#{col},#{row})\n", print_for(piece)
         print_game
         sleep 0.01
