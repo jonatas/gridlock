@@ -97,19 +97,23 @@ RSpec.describe GridLock do
 
     context ".match?" do
       it { expect(game.match?(cross_circle, 0, 0)).to be_falsy  }
-      it { expect(game.match?(cross_circle, 0, 1)).to be_truthy }
+      it { game.debug!; game.print_game; expect(game.match?(cross_circle, 0, 1)).to be_truthy }
       it { expect(game.match?(square_cross_circle, 0, 0)).to be_truthy }
       it { expect(game.match?(square_cross_circle, 0, 1)).to be_falsy}
       it { expect(game.match?(rotated_cross_circle, 4, 0)).to be_truthy}
       it { expect(game.match?(rotated_cross_circle, 4, 2)).to be_truthy}
       it { expect(game.match?(rotated_cross_circle, 4, 1)).to be_falsy}
       it { expect(game.match?(rotated_square_cross_circle, 1, 0)).to be_truthy}
+      it { expect(game.match?([["◯", "◯"], "▢"], 5, 2)).to be_truthy}
     end
 
     context ".each_symbol_of" do
       specify { expect { |b| game.each_symbol_of(["a","b"], &b) }.to yield_successive_args(["a",0, 0], ["b",0, 1]) }
       specify { expect { |b| game.each_symbol_of([["a",nil],["b",nil]], &b) }.to yield_successive_args(["a",0, 0], ["b", 1, 0]) }
       specify { expect { |b| game.each_symbol_of([["a",nil],["b","c"]], &b) }.to yield_successive_args(["a",0, 0], ["b", 1, 0], ["c", 1, 1]) }
+      specify { expect { |b| game.each_symbol_of([["◯", "◯"], "▢"], &b) }.to yield_successive_args(["◯",0, 0],["◯",0, 1],["▢", 1, 0]) }
+      specify { expect { |b| game.each_symbol_of([["◯", "◯"], ["▢"]], &b) }.to yield_successive_args(["◯",0, 0],["◯",0, 1],["▢", 1, 0]) }
+      specify { expect { |b| game.each_symbol_of([["◯", "◯"], [nil, "▢"]], &b) }.to yield_successive_args(["◯",0, 0],["◯",0, 1],["▢", 1, 1]) }
     end
 
     context ".fit?" do
@@ -153,7 +157,7 @@ RSpec.describe GridLock do
         game.instance_variable_set("@lines", 2)
         game.instance_variable_set("@cols", 3)
       end
-      specify { expect { |b| game.navigate(&b) }.to yield_successive_args([0, 0], [0, 1], [0,2], [1, 0], [1, 1], [1, 2]) }
+      specify { expect { |b| game.navigate(&b) }.to yield_successive_args([0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1]) }
     end
 
     context "around" do
@@ -164,13 +168,14 @@ RSpec.describe GridLock do
       specify { expect(game.around(3,5)).to eq([[2, 5], [3, 4], [3, 6]]) }
       specify { expect(game.around(2,6)).to eq([[1, 6], [2, 5], [3, 6]]) }
       specify { expect(game.around(3,6)).to eq([[2, 6], [3, 5]]) }
+      specify { expect(game.around(0,3)).to eq([[0, 2], [1, 3], [0, 4]]) }
     end
 
     context "put!(piece, *position)" do
       it "fill piece positions" do
         expect(game.put!(cross_circle, 2,1)).to be_truthy
         expect(game.fit?(cross_circle, 2,1)).to be_falsy
-        expect { game.put!(cross_circle, 2,1) }.to raise_error(RuntimeError, 'piece: ["✚", "◯"] does not fit on 2, 1')
+        expect { game.put!(cross_circle, 2,1) }.to raise_error(GridLock::GameError, 'piece: ["✚", "◯"] does not fit on 2, 1')
       end
 
       specify do
@@ -190,7 +195,7 @@ RSpec.describe GridLock do
         expect(game.spot_busy?(2,1)).to be_falsy
         expect(game.spot_busy?(2,2)).to be_falsy
         expect(game.history).to be_empty
-        expect { game.undo }.to raise_error(RuntimeError, 'History empty! Nothing to undo.')
+        expect { game.undo }.to raise_error(GridLock::GameError, 'History empty! Nothing to undo.')
       end
     end
   end

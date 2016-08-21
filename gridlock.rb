@@ -81,6 +81,9 @@ module GridLock
     [ CIRCLE, CIRCLE, SQUARE, SQUARE ]
   ]
 
+  class GameError < StandardError
+  end
+
   class Game
     attr_reader :history, :cols, :lines, :cursor_hover
     def initialize
@@ -104,6 +107,10 @@ module GridLock
     def cursor_hover? x, y
       @hover == [x, y]
     end
+    def simple? piece
+      piece.length == 2 &&
+        piece.none?{|e|e.is_a?Array}
+    end
 
     def each_symbol_of piece, &block
       piece.each_with_index do |symbol, x|
@@ -111,16 +118,20 @@ module GridLock
           symbol.each_with_index do |_symbol,y|
             block.call _symbol, x, y if _symbol
           end
-        else
-          block.call symbol, 0, x if symbol
+        elsif symbol
+            if simple? piece
+              block.call symbol, 0, x
+            else
+              block.call symbol, x, 0
+            end
         end
       end
     end
 
     def navigate
       yields = []
-      (0...@lines).each do |x|
-        (0...@cols).each do |y|
+      (0...@lines).each do |y|
+        (0...@cols).each do |x|
           yields << yield(x, y)
         end
       end
@@ -155,8 +166,8 @@ module GridLock
       debug "match? #{piece.inspect}, row: #{row}, col: #{y}"
       each_symbol_of(piece) do |symbol, i, j|
         debug "> match? #{symbol}, i: #{i}, j: #{j}"
-        if row + i > @lines || y + j > @cols
-          debug "#{row} + #{i} > #{@cols} || #{y} + #{j} > #{@lines}"
+        if row + i > @lines-1 || y + j > @cols-1
+          debug "#{row} + #{i} > #{@lines-1} || #{y} + #{j} > #{@cols-1}"
           return false
         end
         expected_symbol = GridLock::Board[row+i][y+j]
@@ -169,12 +180,12 @@ module GridLock
     end
 
     def fill x, y
-      fail "spot busy: #{x}, #{y}" if spot_busy? x,y
+      raise GameError, "spot busy: #{x}, #{y}" if spot_busy? x,y
       @fill[x][y] = true
     end
 
     def take_out x, y
-      fail "nothing to take out on #{x}, #{y}" unless spot_busy? x, y
+      raise GameError, "nothing to take out on #{x}, #{y}" unless spot_busy? x, y
       @fill[x][y] = false
     end
 
@@ -229,7 +240,7 @@ module GridLock
     end
 
     def put! piece, x, y
-      fail "piece: #{piece.inspect} does not fit on #{x}, #{y}" unless fit? piece, x, y
+      raise GameError, "piece: #{piece.inspect} does not fit on #{x}, #{y}" unless fit? piece, x, y
       @history << []
       each_symbol_of piece do |_, i,j|
         col, row = x+i, y+j
@@ -238,15 +249,13 @@ module GridLock
       end
       enclosured_points = enclosures
       unless enclosured_points.empty?
-        debug!
-        print_game
-        fail "#{piece.inspect} on (#{x},#{y}) enclosures: #{enclosures.inspect}"
+        raise GameError, "#{piece.inspect} on (#{x},#{y}) enclosures: #{enclosures.inspect}"
       end
       true
     end
 
     def undo
-      fail "History empty! Nothing to undo." if @history.empty?
+      raise GameError, "History empty! Nothing to undo." if @history.empty?
       action = @history.pop
       action.each do |(col, row)|
         take_out col, row
