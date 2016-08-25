@@ -216,11 +216,11 @@ RSpec.describe GridLock do
         game.put!(cross_circle, 2, 1)
         game.print_game
         expect(game.spot_busy?(2,1)).to be_truthy
-        expect(game.spot_busy?(3,1)).to be_truthy
-        expect(game.history[0]).to match_array([[2,1], [3,1]])
+        expect(game.spot_busy?(2,2)).to be_truthy
+        expect(game.history[0]).to match_array([[2,1], [2,2]])
         game.undo
         expect(game.spot_busy?(2,1)).to be_falsy
-        expect(game.spot_busy?(3,1)).to be_falsy
+        expect(game.spot_busy?(2,2)).to be_falsy
         expect(game.history).to be_empty
         expect { game.undo }.to raise_error(GridLock::GameError, 'History empty! Nothing to undo.')
       end
