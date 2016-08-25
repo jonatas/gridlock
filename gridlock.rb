@@ -85,8 +85,8 @@ module GridLock
   end
 
   class Game
-    attr_reader :history, :cols, :lines, :cursor_hover, :started_at
-    def initialize
+    attr_reader :history, :cols, :lines, :cursor_hover, :started_at, :pieces
+    def initialize pieces
       @status = "started"
       @cols = GridLock::Board[0].length
       @rows = GridLock::Board.length
@@ -95,10 +95,15 @@ module GridLock
       @cursor_hover = array_board
       @lookups = 0
       @history = []
+      @pieces = pieces
     end
 
     def array_board
       Array.new(@rows) { Array.new(@cols, false) }
+    end
+
+    def get_piece!
+      @pieces.sample!
     end
 
     def spot_busy? row, col
@@ -218,18 +223,14 @@ module GridLock
 
 
     def fit? piece, row=0, col=0
-      return false unless piece
+      return false unless piece || spot_busy?(row, col)
+      @lookups+=1
       fit = true
       hover(row, col) do
-        puts "\e[H\e[2J",
-          "loop: #{@lookups+=1}, row: #{row}, col: #{col})\n"
-        print_piece(piece)
-        print_game
-        sleep 0.01
         each_symbol_of piece do |_sym, _row, _col|
-          if col+_col > @cols || row+_row > @rows || spot_busy?(row, col)
-            fit = false 
-            break 
+          if col+_col > @cols-1 || row+_row > @rows-1 || spot_busy?(row+_row, col+_col)
+            fit = false
+            break
           end
         end
         unless match?(piece, row, col)
@@ -239,13 +240,20 @@ module GridLock
       fit
     end
 
+    def status col: nil, row: nil
+      puts "\e[H\e[2J",
+        "loop: #{@lookups}, row: #{row}, col: #{col}), pieces: #{@pieces.length}\n"
+      print_piece(piece)
+      print_game
+    end
+
     def put! piece, row, col
       raise GameError, "piece: #{piece.inspect} does not fit on row: #{row}, col: #{col}" unless fit? piece, row, col
-      @history << []
+      @history << [piece, []]
       each_symbol_of piece do |_, r,c|
         _row, _col = row+r, col+c
         fill(_row, _col)
-        @history.last << [_row, _col]
+        @history.last.last << [_row, _col]
       end
       enclosured_points = enclosures
       unless enclosured_points.empty?
@@ -256,10 +264,12 @@ module GridLock
 
     def undo
       raise GameError, "History empty! Nothing to undo." if @history.empty?
-      action = @history.pop
-      action.each do |(row, col)|
+      piece, action = @history.pop
+      action.each do |row, col|
         take_out row, col
       end
+      @pieces << piece
+      piece
     end
 
     def print_game color=true

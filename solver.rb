@@ -9,21 +9,18 @@ module GridLock
 
 
     def self.run
-      game = GridLock::Game.new
+      game = GridLock::Game.new GridLock.ramdom_solution
       game.print_game
       accepted = false 
-      pieces = GridLock.ramdom_solution
-
-      game.debug!
       while !game.finished?
-        piece = pieces.sample!
+        piece = game.get_piece!
         if piece.nil?
           puts "pieces is over \o/ but game finished? #{game.finished?}"
           break
         end
         positions = game.free_positions
+        accepted = false
         while !((row,col) = positions.sample!).nil?
-          accepted = false
           begin
             if game.fit? piece, row, col
               game.put! piece, row, col
@@ -43,14 +40,14 @@ module GridLock
             end
 
           rescue GameError
-            puts "Ops! #{$!}"
+            puts "Ops! #{$!}", $@
             game.print_game
-            game.undo
-            pieces << piece unless accepted
+            (game.enclosures.length + rand(2) ).times { game.undo unless game.history.empty? }
           end
           return if game.finished?
         end
-        pieces << piece unless accepted
+        sleep 0.01
+        game.pieces << piece unless accepted
       end
       puts "game finished? #{game.finished?} in #{Time.now - game.started_at} seconds.", game.inspect
     rescue
