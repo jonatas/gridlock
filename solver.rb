@@ -7,62 +7,59 @@ end
 module GridLock
   class Solver
 
+
     def self.run
       game = GridLock::Game.new
       game.print_game
       accepted = false 
       pieces = GridLock.ramdom_solution
-      avoid = {}
+
+      game.debug!
       while !game.finished?
         piece = pieces.sample!
         if piece.nil?
           puts "pieces is over \o/ but game finished? #{game.finished?}"
           break
         end
-        (GridLock::Board[0].size).times do |x|
-          (GridLock::Board.size).times do |y|
-            next if game.spot_busy? x, y
-            next if avoid[[piece,x,y]]
-            begin
-              if game.fit? piece, x, y
-                game.put! piece, x, y
-                next
-              elsif (r1= GridLock::Pieces.rotate(piece)) && game.fit?(r1, x, y)
-                game.put! r1, x, y
-                accepted = true
-                break
-              elsif (r2= GridLock::Pieces.rotate(r1)) && game.fit?(r2, x, y)
-                game.put! r2, x, y
-                accepted = true
-                break
-              elsif (r3= GridLock::Pieces.rotate(r2)) && game.fit?(r3, x, y)
-                game.put! r3, x, y
-                accepted = true
-                break
-              end
-
-            rescue GameError
-              puts "Ops! #{$!}"
-              game.print_game
-              sleep 2
-              game.undo
-              avoid[[piece,x,y]] = true
-              pieces << piece unless accepted
-            end
-            return if game.finished?
-          end
+        positions = game.free_positions
+        while !((row,col) = positions.sample!).nil?
           accepted = false
+          begin
+            if game.fit? piece, row, col
+              game.put! piece, row, col
+              next
+            elsif (r1= GridLock::Piece.rotate(piece)) && game.fit?(r1, row, col)
+              game.put! r1, row, col
+              accepted = true
+              break
+            elsif (r2= GridLock::Piece.rotate(r1)) && game.fit?(r2, row, col)
+              game.put! r2, row, col
+              accepted = true
+              break
+            elsif (r3= GridLock::Piece.rotate(r2)) && game.fit?(r3, row, col)
+              game.put! r3, row, col
+              accepted = true
+              break
+            end
+
+          rescue GameError
+            puts "Ops! #{$!}"
+            game.print_game
+            game.undo
+            pieces << piece unless accepted
+          end
+          return if game.finished?
         end
-        pieces << piece
+        pieces << piece unless accepted
       end
+      puts "game finished? #{game.finished?} in #{Time.now - game.started_at} seconds.", game.inspect
+    rescue
+      puts $!,$@
       puts "game finished? #{game.finished?}"
       p game
+      puts "Interrupted after #{Time.now - game.started_at} seconds."
     end
   end
-rescue
-  puts "game finished? #{game.finished?}"
-  p game
-  p avoid
 end
 
 GridLock::Solver.run

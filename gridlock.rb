@@ -28,10 +28,10 @@ module GridLock
     %w(AABCDDEFGIKN ABCDDEFFGJKM ABCCDEFFIJMN ABDDEEFFIKMN ABBCDEFFIJKM ABBCCCDFIJKM ABBCCCDDEFFJK)
       .sample
       .split("")
-      .map{|piece|Object.const_get("GridLock::Pieces::#{piece}")}
+      .map{|piece|Object.const_get("GridLock::Piece::#{piece}")}
   end
 
-  module Pieces
+  module Piece
 
     All = [
 
@@ -54,7 +54,7 @@ module GridLock
     ]
 
     def self.multidimensional? piece
-      piece[0].is_a?(Array)
+      piece[0].is_a?(Array) || piece[1].is_a?(Array)
     end
 
     def self.rotate piece
@@ -85,12 +85,13 @@ module GridLock
   end
 
   class Game
-    attr_reader :history, :cols, :lines, :cursor_hover
+    attr_reader :history, :cols, :lines, :cursor_hover, :started_at
     def initialize
       @status = "started"
       @cols = GridLock::Board[0].length
       @rows = GridLock::Board.length
       @fill = array_board
+      @started_at = Time.now
       @cursor_hover = array_board
       @lookups = 0
       @history = []
@@ -106,6 +107,15 @@ module GridLock
 
     def cursor_hover? row, col
       @hover == [row, col]
+    end
+
+    def free_positions
+      positions = []
+      navigate do |row, col|
+        next if spot_busy? row, col
+        positions << [row,col]
+      end
+      positions
     end
 
     def simple? piece
@@ -186,19 +196,18 @@ module GridLock
       @fill.all?{|row|row.all?&:true?}
     end
 
-    def print_for(piece)
+    def print_piece(piece)
       return unless piece
-      if piece.any?{|e|e.is_a?(Array)}
-        if piece[0][0] == nil
-          [piece[0].join("\n"),piece[1]]
-        elsif piece[0][1] == nil
-          [piece[0].join(" "),piece[1].join(" ")]
+      stdout =
+        if Piece.multidimensional? piece
+          piece.map do |row|
+            row = [row] unless row.is_a? Array
+            row.map {|e|e || " "}.join(" ")
+          end
         else
-          [piece[1], piece[0]]
-        end.join("\n")
-      else
-        piece.join(" ") + "\n"
-      end.to_s + " \n\n"
+          [piece.join(" "),'']
+        end
+      puts stdout
     end
 
     def hover(row, col)
@@ -212,7 +221,9 @@ module GridLock
       return false unless piece
       fit = true
       hover(row, col) do
-        puts "\e[H\e[2J \n Loop: #{@lookups+=1}, (row: #{row}, col: #{col})\n", print_for(piece)
+        puts "\e[H\e[2J",
+          "loop: #{@lookups+=1}, row: #{row}, col: #{col})\n"
+        print_piece(piece)
         print_game
         sleep 0.01
         each_symbol_of piece do |_sym, _row, _col|
@@ -231,8 +242,8 @@ module GridLock
     def put! piece, row, col
       raise GameError, "piece: #{piece.inspect} does not fit on row: #{row}, col: #{col}" unless fit? piece, row, col
       @history << []
-      each_symbol_of piece do |_, i,j|
-        _col, _row = col+i, row+j
+      each_symbol_of piece do |_, r,c|
+        _row, _col = row+r, col+c
         fill(_row, _col)
         @history.last << [_row, _col]
       end

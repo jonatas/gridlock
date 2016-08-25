@@ -6,7 +6,7 @@ RSpec.describe GridLock do
     expect(GridLock::Symbols).to include([GridLock::CROSS, GridLock::SQUARE, GridLock::CIRCLE].sample)
   end
   it "has pieces with symbols" do
-    expect(GridLock::Pieces::All).to include(GridLock::Pieces::A)
+    expect(GridLock::Piece::All).to include(GridLock::Piece::A)
   end
 
   it "has a default board" do
@@ -14,12 +14,12 @@ RSpec.describe GridLock do
   end
 
   context "rotate" do
-    let(:piece) { GridLock::Pieces::A }
+    let(:piece) { GridLock::Piece::A }
 
-    let(:rotated_1) { GridLock::Pieces.rotate(piece)     } # 90º
-    let(:rotated_2) { GridLock::Pieces.rotate(rotated_1) } # 180º
-    let(:rotated_3) { GridLock::Pieces.rotate(rotated_2) } # 270º
-    let(:rotated_4) { GridLock::Pieces.rotate(rotated_3) } # 360º -> original piece
+    let(:rotated_1) { GridLock::Piece.rotate(piece)     } # 90º
+    let(:rotated_2) { GridLock::Piece.rotate(rotated_1) } # 180º
+    let(:rotated_3) { GridLock::Piece.rotate(rotated_2) } # 270º
+    let(:rotated_4) { GridLock::Piece.rotate(rotated_3) } # 360º -> original piece
 
     it("original") { expect(piece).to eq( [GridLock::CROSS, GridLock::CIRCLE]) }
 
@@ -44,7 +44,7 @@ RSpec.describe GridLock do
     end
 
     context "two dimensions" do
-      let(:piece) { GridLock::Pieces::H }
+      let(:piece) { GridLock::Piece::H }
 
       it "original" do
         expect(piece).to eq( [
@@ -79,9 +79,9 @@ RSpec.describe GridLock do
   context 'game' do
     let(:game) { GridLock::Game.new }
     let(:cross_circle) {  [GridLock::CROSS, GridLock::CIRCLE] }
-    let(:rotated_cross_circle) {GridLock::Pieces.rotate(cross_circle)}
+    let(:rotated_cross_circle) {GridLock::Piece.rotate(cross_circle)}
     let(:square_cross_circle) { [[GridLock::SQUARE, GridLock::CROSS], [GridLock::CIRCLE]] }
-    let(:rotated_square_cross_circle) { GridLock::Pieces.rotate(square_cross_circle) }
+    let(:rotated_square_cross_circle) { GridLock::Piece.rotate(square_cross_circle) }
 
     it "print" do
       expect { game.print_game(false) }.to output( %{
@@ -92,6 +92,21 @@ RSpec.describe GridLock do
 ✚ ▢ ✚ ✚
 ◯ ▢ ◯ ◯
 ◯ ◯ ▢ ▢
+}).to_stdout
+    end
+
+    it "print piece" do
+      expect {puts ; game.print_piece([["◯", "✚"], [nil, "▢"]]) }.to output( %{
+◯ ✚
+  ▢
+}).to_stdout
+      expect { puts ; game.print_piece([[nil, "◯"], ["✚", "▢"]]) }.to output( %{
+  ◯
+✚ ▢
+}).to_stdout
+      expect { puts ; game.print_piece(["✚", "▢"]) }.to output( %{
+✚ ▢
+
 }).to_stdout
     end
 
