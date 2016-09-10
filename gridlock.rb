@@ -3,18 +3,20 @@ class String
   def colorize(color_code)
     "\e[#{color_code}m#{self}\e[0m"
   end
-
   def  red
     colorize(31)
   end
-
   def green
     colorize(32)
   end
   def purple
     colorize(35)
   end
-
+end
+class Array
+  def sample!
+    delete_at rand length
+  end
 end
 module GridLock
 
@@ -85,11 +87,10 @@ module GridLock
   end
 
   class Game
-    attr_reader :history, :cols, :lines, :cursor_hover, :started_at, :pieces
-    def initialize pieces
-      @status = "started"
-      @cols = GridLock::Board[0].length
-      @rows = GridLock::Board.length
+    attr_reader :history, :cols, :lines, :cursor_hover, :started_at, :pieces, :lookups
+    def initialize pieces, board: GridLock::Board
+      @cols = board[0].length
+      @rows = board.length
       @fill = array_board
       @started_at = Time.now
       @cursor_hover = array_board
@@ -103,7 +104,7 @@ module GridLock
     end
 
     def get_piece!
-      @pieces.sample!
+      @last_piece = @pieces.sample
     end
 
     def spot_busy? row, col
@@ -132,14 +133,11 @@ module GridLock
       piece.each_with_index do |symbol, i|
         if symbol.is_a? Array
           symbol.each_with_index do |_symbol,y|
-            block.call _symbol, i, y if _symbol
+            block.call(_symbol, i, y) if _symbol
           end
         elsif symbol
-          if simple? piece
-            block.call symbol, 0, i
-          else
-            block.call symbol, i, 0
-          end
+          params = simple?(piece) ? [0,i] : [i,0]
+          block.call(symbol, *params)
         end
       end
     end
@@ -223,7 +221,6 @@ module GridLock
 
 
     def fit? piece, row=0, col=0
-      return false unless piece || spot_busy?(row, col)
       @lookups+=1
       fit = true
       hover(row, col) do
@@ -240,7 +237,7 @@ module GridLock
       fit
     end
 
-    def status col: nil, row: nil
+    def status col: nil, row: nil, piece: nil
       puts "\e[H\e[2J",
         "loop: #{@lookups}, row: #{row}, col: #{col}), pieces: #{@pieces.length}\n"
       print_piece(piece)
@@ -249,7 +246,11 @@ module GridLock
 
     def put! piece, row, col
       raise GameError, "piece: #{piece.inspect} does not fit on row: #{row}, col: #{col}" unless fit? piece, row, col
-      @history << [piece, []]
+      status(row: row, col: col, piece: piece)
+      if (index = @pieces.index(@last_piece))
+        @pieces.delete_at(index)
+      end
+      @history << [@last_piece, []]
       each_symbol_of piece do |_, r,c|
         _row, _col = row+r, col+c
         fill(_row, _col)
@@ -262,13 +263,14 @@ module GridLock
       true
     end
 
-    def undo
+    def undo random: false
       raise GameError, "History empty! Nothing to undo." if @history.empty?
-      piece, action = @history.pop
+      piece, action = @history.send(random ? :sample! : :pop)
       action.each do |row, col|
         take_out row, col
       end
-      @pieces << piece
+      @pieces.push << piece
+      puts "#{piece.inspect} is back to pieces. now it's #{@pieces.length}"
       piece
     end
 
