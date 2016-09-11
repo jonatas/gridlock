@@ -8,7 +8,10 @@ RSpec.describe GridLock do
   describe GridLock::Piece do
     describe '.print' do
       let(:piece) { [['◯', '✚'], [nil, '▢']] }
-      subject { puts; GridLock::Piece.print(piece) }
+      subject do
+        puts
+        GridLock::Piece.print(piece)
+      end
       specify do
         expect { subject }.to output(%(
 ◯ ✚
@@ -50,8 +53,8 @@ RSpec.describe GridLock do
       subject { GridLock::Piece.multidimensional?(piece) }
       specify { expect(subject).to be_falsy }
 
-      context 'rotated' do
-        let(:piece) { GridLock::Piece.rotate(GridLock::Piece::A) }
+      context 'simple rotated' do
+        let(:piece) { GridLock::Piece.rotations(GridLock::Piece::A)[1] }
         specify { expect(subject).to be_falsy }
       end
 
@@ -87,25 +90,25 @@ RSpec.describe GridLock do
     end
     describe '.rotate' do
       let(:piece) { GridLock::Piece::A }
-      let(:rotations) { GridLock::Piece.rotations(piece) } # 90º
+      let(:rotations) { GridLock::Piece.rotations(piece) } # 90 degrees
       let(:original) { rotations[0] }
-      let(:rotated_1) { rotations[1] } # 90º
-      let(:rotated_2) { rotations[2] } # 180º
-      let(:rotated_3) { rotations[3] } # 270º
+      let(:rotated_1) { rotations[1] } # 90 degrees
+      let(:rotated_2) { rotations[2] } # 180 degrees
+      let(:rotated_3) { rotations[3] } # 270 degrees
 
       context 'one dimension' do
         specify { expect(original).to eq([GridLock::CROSS, GridLock::CIRCLE]) }
 
-        it '90º' do
+        it '90 degrees' do
           expect(rotated_1).to eq([
                                     [GridLock::CROSS],
                                     [GridLock::CIRCLE]
                                   ])
         end
 
-        it('180º') { expect(rotated_2).to eq([GridLock::CIRCLE, GridLock::CROSS]) }
+        it('180 degrees') { expect(rotated_2).to eq([GridLock::CIRCLE, GridLock::CROSS]) }
 
-        it '270º' do
+        it '270 degrees' do
           expect(rotated_3).to eq([
                                     [GridLock::CIRCLE],
                                     [GridLock::CROSS]
@@ -123,21 +126,21 @@ RSpec.describe GridLock do
                                  ])
         end
 
-        it '90º' do
+        it '90 degrees' do
           expect(rotated_1).to eq([
                                     [GridLock::SQUARE, GridLock::CROSS],
                                     [nil, GridLock::CIRCLE]
                                   ])
         end
 
-        it '180º' do
+        it '180 degrees' do
           expect(rotated_2).to eq([
                                     [nil, GridLock::SQUARE],
                                     [GridLock::CIRCLE, GridLock::CROSS]
                                   ])
         end
 
-        it '270º' do
+        it '270 degrees' do
           expect(rotated_3).to eq([
                                     [GridLock::CIRCLE, nil],
                                     [GridLock::CROSS, GridLock::SQUARE]
@@ -155,7 +158,7 @@ RSpec.describe GridLock do
     let(:rotated_square_cross_circle) { GridLock::Piece.rotate(square_cross_circle) }
 
     it 'print' do
-      expect { game.print_game(false) }.to output(%(
+      expect { game.print_game(color: false) }.to output(%(
 ▢ ✚ ◯ ◯
 ◯ ▢ ▢ ✚
 ✚ ✚ ◯ ✚
@@ -217,7 +220,7 @@ RSpec.describe GridLock do
           game.fill(1, 2)
           game.fill(2, 3)
         end
-        specify { game.print_game; expect(game.enclosured?(1, 3)).to be_truthy }
+        specify { expect(game.enclosured?(1, 3)).to be_truthy }
         specify { expect(game.enclosured?(2, 3)).to be_falsy  }
         specify { expect(game.enclosured?(0, 3)).to be_falsy  }
       end
@@ -227,7 +230,6 @@ RSpec.describe GridLock do
           game.fill(0, 3)
           game.fill(1, 2)
           game.fill(2, 3)
-          game.print_game
         end
         specify { expect(game.enclosured?(1, 3)).to be_truthy }
       end
@@ -272,7 +274,6 @@ RSpec.describe GridLock do
 
       specify do
         game.put!(cross_circle, 2, 1)
-        game.print_game
         expect(game.spot_busy?(2, 1)).to be_truthy
         expect(game.spot_busy?(2, 2)).to be_truthy
         expect(game.history[0]).to match_array([cross_circle, [[2, 1], [2, 2]]])

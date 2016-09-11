@@ -1,26 +1,3 @@
-class String
-  # colorization
-  def colorize(color_code)
-    "\e[#{color_code}m#{self}\e[0m"
-  end
-
-  def red
-    colorize(31)
-  end
-
-  def green
-    colorize(32)
-  end
-
-  def purple
-    colorize(35)
-  end
-end
-class Array
-  def sample!
-    delete_at rand length
-  end
-end
 module GridLock
 
   Symbols = [
@@ -37,7 +14,7 @@ module GridLock
       AAABBBCCCDFGH AAABBBCCEFFIJ AAABCDEFGIMN AAABCCDDEEFHL AAABCCCDGIJL
       AAABBCEFIJKM AAABBCCCDDEEFF AAABBCCDGHKM AAAABBCCDEFGI AAACCCDEIJLN
       AAABBCCCIJLN AAAABCCDEEFHM AAAABCCDEEFIM AAAABBBCCCFGJ AAAABBBCCDEEFF
-    ].inject({}) { |h, e| h[e] = e.split('').map { |piece| Object.const_get("GridLock::Piece::#{piece}") }; h }
+    ].each_with_object({}) { |e, h| h[e] = e.split('').map { |piece| Object.const_get("GridLock::Piece::#{piece}") } }
   end
 
   def self.ramdom_solution
@@ -92,30 +69,30 @@ module GridLock
     end
 
     def self.rotate(piece)
-      if piece[1][1] || piece[0][1]
-        [[piece[1][0], piece[0][0]],
-         [piece[1][1], piece[0][1]]]
+      [
+        [piece[1][0], piece[0][0]],
+        ([piece[1][1], piece[0][1]] if piece[1][1] || piece[0][1])
+      ].compact
+    end
+
+    def self.string_for_multidimensional(piece)
+      piece.map do |row|
+        row = [row] unless row.is_a? Array
+        row.map { |e| e || ' ' }.join(' ')
+      end
+    end
+
+    def self.string_for_simple(piece)
+      if piece[0].is_a? String
+        [piece.join(' '), '']
       else
-        [piece[1][0], piece[0][0]]
+        piece
       end
     end
 
     def self.print(piece)
-      return unless piece
-      stdout =
-        if Piece.multidimensional? piece
-          piece.map do |row|
-            row = [row] unless row.is_a? Array
-            row.map { |e| e || ' ' }.join(' ')
-          end
-        else
-          if piece[0].is_a? String
-            [piece.join(' '), '']
-          else
-            piece
-          end
-        end
-      puts stdout
+      method = multidimensional?(piece) ? :string_for_multidimensional : :string_for_simple
+      puts public_send(method, piece)
     end
   end
 
@@ -149,10 +126,6 @@ module GridLock
       Array.new(@rows) { Array.new(@cols, false) }
     end
 
-    def get_piece!
-      @pieces.sample
-    end
-
     def spot_busy?(row, col)
       @fill[row][col]
     end
@@ -173,11 +146,12 @@ module GridLock
     def each_symbol_of(piece)
       piece.each_with_index do |symbol, i|
         if symbol.is_a? Array
-          symbol.each_with_index do |_symbol, y|
-            yield(_symbol, i, y) if _symbol
+          symbol.each_with_index do |current_symbol, col|
+            yield(current_symbol, i, col) if current_symbol
           end
         elsif symbol
-          params = GridLock::Piece.multidimensional?(piece) ? [i, 0] : [0, i]
+          params = [0, i]
+          params.reverse! if GridLock::Piece.multidimensional?(piece)
           yield(symbol, *params)
         end
       end
@@ -212,25 +186,25 @@ module GridLock
 
     def enclosured?(row, col)
       debug "enclosured?: row: #{row}, col: #{col} #{around(row, col).inspect}"
-      found = around(row, col).all? { |(_row, _col)| debug("spot_busy?(#{_row},#{_col}) # => #{busy = spot_busy?(_row, _col)}"); busy }
+      found = around(row, col).all? do |(current_row, current_col)|
+        busy = spot_busy?(current_row, current_col)
+        debug("spot_busy?(#{current_row},#{current_col}) # => #{busy}")
+        busy
+      end
       debug "? row: #{row}, col: #{col}, found enclosured?: #{found}"
       found
     end
 
+    def out_of_board?(current_row, current_col)
+      current_row > @rows - 1 || current_col > @cols - 1
+    end
+
     def match?(piece, row, col)
       debug "match? #{piece.inspect}, row: #{row}, col: #{col}"
-      each_symbol_of(piece) do |symbol, _row, _col|
-        debug "> match? #{symbol}, _row: #{_row}, _col: #{_col}"
-        if row + _row > @rows - 1 || col + _col > @cols - 1
-          debug "Out of board: #{row} + #{_row} > #{@rows - 1} || #{col} + #{_col} > #{@cols - 1}"
-          return false
-        end
-        expected_symbol = GridLock::Board[row + _row][col + _col]
-        if symbol != expected_symbol
-          debug "#{row}:#{col} - #{_row}:#{_col} #{symbol} != #{expected_symbol}"
-          return false
-        end
-        debug "#{row}:#{col} - #{_row}:#{_col} #{symbol} == #{expected_symbol}"
+      navigate_on(piece, row, col) do |current_symbol, current_row, current_col|
+        debug "> match? #{current_symbol}, current_row: #{current_row}, current_col: #{current_col}"
+        return false if out_of_board? current_row, current_col
+        return false if current_symbol != GridLock::Board[current_row][current_col]
       end
       true
     end
@@ -249,8 +223,8 @@ module GridLock
       @lookups += 1
       fit = true
       hover(row, col) do
-        navigate_on piece, row, col do |_row, _col|
-          if _col > @cols - 1 || _row > @rows - 1 || spot_busy?(_row, _col)
+        navigate_on piece, row, col do |_, current_row, current_col|
+          if out_of_board?(current_row, current_col) || spot_busy?(current_row, current_col)
             fit = false
             break
           end
@@ -268,14 +242,22 @@ module GridLock
     end
 
     def navigate_on(piece, row, col)
-      each_symbol_of piece do |_, r, c|
-        yield(row + r, col + c)
+      each_symbol_of piece do |current_symbol, r, c|
+        yield(current_symbol, row + r, col + c)
       end
     end
 
     def remove_from_pieces!(piece)
-      if (index = @pieces.index { |_piece| GridLock::Piece.rotations(_piece).include?(piece) })
+      if (index = @pieces.index { |current_piece| GridLock::Piece.rotations(current_piece).include?(piece) })
         @pieces.delete_at(index)
+      end
+    end
+
+    def add_on_history!(piece, row, col)
+      @history << [piece, []]
+      navigate_on piece, row, col do |_, current_row, current_col|
+        fill(current_row, current_col)
+        @history.last.last << [current_row, current_col]
       end
     end
 
@@ -283,48 +265,20 @@ module GridLock
       fail GameError, "piece: #{piece.inspect} does not fit on row: #{row}, col: #{col}" unless fit? piece, row, col
       status(row: row, col: col, piece: piece)
       remove_from_pieces! piece
-      @history << [piece, []]
-      navigate_on piece, row, col do |_row, _col|
-        fill(_row, _col)
-        @history.last.last << [_row, _col]
-      end
-      enclosured_points = enclosures
-      unless enclosured_points.empty?
-        fail GameError, "#{piece.inspect} on row: #{row}, col: #{col} enclosures: #{enclosures.inspect}"
-      end
+      add_on_history! piece, row, col
+      fail GameError, "#{piece.inspect} on row: #{row}, col: #{col} enclosures: #{enclosures.inspect}" unless enclosures.empty?
       true
     end
 
     def undo(random: false)
       fail GameError, 'History empty! Nothing to undo.' if @history.empty?
-      piece, action = @history.send(random ? :sample! : :pop)
+      piece, action = @history.public_send(random ? :sample! : :pop)
       action.each do |row, col|
         take_out row, col
       end
       @pieces.push << piece
       puts "#{piece.inspect} is back to pieces. now it's #{@pieces.length}"
       piece
-    end
-
-    def print_game(color = true)
-      print "\n"
-      GridLock::Board.each_with_index.map do |line, line_index|
-        line.each_with_index.map do |spot, column_index|
-          if color
-            if spot_busy?(line_index, column_index)
-              print spot.red
-            elsif cursor_hover?(line_index, column_index)
-              print spot.purple
-            else
-              print spot.green
-            end
-          else
-            print spot
-          end
-          print(' ') if column_index < line.size - 1
-        end
-        puts
-      end
     end
 
     def debug(message)
@@ -344,5 +298,51 @@ module GridLock
       fail GameError, "Can't take out. Spot empty on row: #{row}, col: #{col}" unless spot_busy? row, col
       @fill[row][col] = false
     end
+
+    def color_for(row, col)
+      return :red if spot_busy?(row, col)
+      return :purple if cursor_hover?(row, col)
+      :green
+    end
+
+    def print_game(color: true)
+      print "\n"
+      GridLock::Board.each_with_index.map do |line, line_index|
+        line.each_with_index.map do |spot, column_index|
+          if color
+            Output.public_send(color_for(line_index, column_index), spot)
+          else
+            print spot
+          end
+          print(' ') if column_index < line.size - 1
+        end
+        puts
+      end
+    end
+  end
+end
+
+class Output
+  class << self
+    def colorize(str, color_code)
+      print "\e[#{color_code}m#{str}\e[0m"
+    end
+
+    def red(str)
+      colorize(str, 31)
+    end
+
+    def green(str)
+      colorize(str, 32)
+    end
+
+    def purple(str)
+      colorize(str, 35)
+    end
+  end
+end
+class Array
+  def sample!
+    delete_at rand length
   end
 end
