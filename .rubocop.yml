@@ -1,0 +1,67 @@
+AllCops:
+  Include:
+    - '**/Gemfile'
+  Exclude:
+    - 'bundle/**/*'
+    - 'vendor/**/*'
+  DisplayCopNames: true
+  TargetRubyVersion: 2.2
+
+ClassAndModuleChildren:
+  Enabled: false
+
+ClassLength:
+  Enabled: false
+
+Documentation:
+  Enabled: false
+
+EmptyLinesAroundClassBody:
+  Enabled: false
+
+EmptyLinesAroundModuleBody:
+  Enabled: false
+
+PredicateName:
+  Enabled: false
+
+LineLength:
+  Enabled: false
+
+MethodLength:
+  Enabled: false
+
+SpaceBeforeFirstArg:
+  Enabled: false
+
+TrailingCommaInArguments:
+  EnforcedStyleForMultiline: no_comma
+
+TrailingCommaInLiteral:
+  EnforcedStyleForMultiline: no_comma
+
+SpaceInsideHashLiteralBraces:
+  EnforcedStyle: no_space
+
+SignalException:
+  EnforcedStyle: semantic
+
+PercentLiteralDelimiters:
+  PreferredDelimiters:
+    '%r': '{}'
+    '%i': '[]'
+    '%w': '[]'
+    '%W': '[]'
+    '%Q': '{}'
+
+Rails:
+  Enabled: false
+
+Style/Send:
+  Enabled: true
+
+Style/UnneededPercentQ:
+  Enabled: true
+
+Style/Lambda:
+  Enabled: false
