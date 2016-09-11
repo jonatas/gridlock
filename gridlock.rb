@@ -58,20 +58,51 @@ module GridLock
     ]
 
     def self.multidimensional? piece
-      piece[0].is_a?(Array) || piece[1].is_a?(Array)
+      piece.any? {|e|e.is_a?(Array) && e.compact.length > 1}
+    end
+
+    def self.rotations piece
+      unless multidimensional? piece
+        [
+          piece,
+          [[piece[0]], [piece[1]]],
+          piece.reverse,
+          [[piece[1]],[piece[0]]]
+        ]
+      else
+        [ piece,
+          r1 = rotate(piece),
+          r2 = rotate(r1),
+          rotate(r2)
+        ]
+      end
     end
 
     def self.rotate piece
-      if multidimensional? piece
-        if piece[1][1] || piece[0][1]
-          [[piece[1][0], piece[0][0]],
-           [piece[1][1], piece[0][1]]] 
-        else
-          [piece[1][0], piece[0][0]]
-        end
+      if piece[1][1] || piece[0][1]
+        [[piece[1][0], piece[0][0]],
+         [piece[1][1], piece[0][1]]]
       else
-        [[piece[0],nil],[piece[1],nil]]
+        [piece[1][0], piece[0][0]]
       end
+    end
+
+    def self.print(piece)
+      return unless piece
+      stdout =
+        if Piece.multidimensional? piece
+          piece.map do |row|
+            row = [row] unless row.is_a? Array
+            row.map {|e|e || " "}.join(" ")
+          end
+        else
+          if piece[0].is_a? String
+            [piece.join(" "),'']
+          else
+            piece
+          end
+        end
+      puts stdout
     end
   end
 
@@ -90,7 +121,7 @@ module GridLock
 
   class Game
     attr_reader :history, :cols, :lines, :cursor_hover, :started_at, :pieces, :lookups
-    def initialize pieces, board: GridLock::Board
+    def initialize pieces: [], board: GridLock::Board
       @cols = board[0].length
       @rows = board.length
       @fill = array_board
@@ -126,10 +157,6 @@ module GridLock
       positions
     end
 
-    def simple? piece
-      piece.length == 2 &&
-        piece.none?{|e|e.is_a?Array}
-    end
 
     def each_symbol_of piece, &block
       piece.each_with_index do |symbol, i|
@@ -138,7 +165,7 @@ module GridLock
             block.call(_symbol, i, y) if _symbol
           end
         elsif symbol
-          params = simple?(piece) ? [0,i] : [i,0]
+          params = GridLock::Piece.multidimensional?(piece) ? [i,0] : [0,i]
           block.call(symbol, *params)
         end
       end
@@ -201,19 +228,6 @@ module GridLock
       @fill.all?{|row|row.all?&:true?}
     end
 
-    def print_piece(piece)
-      return unless piece
-      stdout =
-        if Piece.multidimensional? piece
-          piece.map do |row|
-            row = [row] unless row.is_a? Array
-            row.map {|e|e || " "}.join(" ")
-          end
-        else
-          [piece.join(" "),'']
-        end
-      puts stdout
-    end
 
     def hover(row, col)
       @hover = [row, col]
@@ -242,7 +256,7 @@ module GridLock
     def status col: nil, row: nil, piece: nil
       puts "\e[H\e[2J",
         "loop: #{@lookups}, row: #{row}, col: #{col}), pieces: #{@pieces.length}\n"
-      print_piece(piece)
+      GridLock::Piece.print(piece)
       print_game
     end
 

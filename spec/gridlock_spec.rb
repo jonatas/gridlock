@@ -13,77 +13,151 @@ RSpec.describe GridLock do
     expect(GridLock::Board).to be_a(Array)
   end
 
-  it 'piece_simple?' do
-    expect(game.piece_simple?(GridLock::Piece::A)).to be_truthy
-    expect(game.piece_simple?(GridLock::Piece::B)).to be_truthy
-    expect(game.piece_simple?(GridLock::Piece.rotate(GridLock::Piece::B))).to be_truthy
-  end
+  describe GridLock::Piece do
+    describe '.multidimensional?' do
+      let(:piece) { GridLock::Piece::A }
+      subject  { GridLock::Piece.multidimensional?(piece) }
+      specify { expect(subject).to be_falsy }
 
-  context "rotate" do
-    let(:piece) { GridLock::Piece::A }
-
-    let(:rotated_1) { GridLock::Piece.rotate(piece)     } # 90º
-    let(:rotated_2) { GridLock::Piece.rotate(rotated_1) } # 180º
-    let(:rotated_3) { GridLock::Piece.rotate(rotated_2) } # 270º
-    let(:rotated_4) { GridLock::Piece.rotate(rotated_3) } # 360º -> original piece
-
-    it("original") { expect(piece).to eq( [GridLock::CROSS, GridLock::CIRCLE]) }
-
-    context "one dimension" do
-
-      it "90º" do
-        expect(rotated_1).to eq( [
-          [GridLock::CROSS, nil],
-          [GridLock::CIRCLE, nil]
-        ])
-      end 
-
-      it("180º") { expect(rotated_2).to eq( [ GridLock::CIRCLE, GridLock::CROSS ] ) }
-
-      it "270º" do
-        expect(rotated_3).to eq( [
-          [GridLock::CIRCLE, nil],
-          [GridLock::CROSS, nil ]
-        ])
+      context 'rotated' do
+        let(:piece) { GridLock::Piece.rotate( GridLock::Piece::A ) }
+        specify { expect(subject).to be_falsy }
       end
-      it("360º is eq 0º"){  expect(rotated_4).to eq( piece ) }
+
+      context 'complex' do
+        let(:piece) { GridLock::Piece::G }
+        specify { expect(subject).to be_truthy }
+      end
     end
 
-    context "two dimensions" do
-      let(:piece) { GridLock::Piece::H }
-
-      it "original" do
-        expect(piece).to eq( [
-          [GridLock::CROSS, GridLock::CIRCLE],
-          GridLock::SQUARE
-        ])
+    describe ".rotations" do
+      let(:piece) { GridLock::Piece::A }
+      subject { GridLock::Piece.rotations piece }
+      specify do
+        expect(subject).to eq([
+          ["✚", "◯"],
+          [["✚"], ["◯"]],
+          ["◯", "✚"],
+          [["◯"], ["✚"]]])
       end
 
-      it "90º" do
-        expect(rotated_1).to eq( [
-          [GridLock::SQUARE, GridLock::CROSS],
-          [             nil, GridLock::CIRCLE],
-        ])
+      context 'complex' do
+        let(:piece) { GridLock::Piece::G }
+        specify do
+          expect(subject).to eq([
+            [["▢", "◯"], "▢"],
+            [["▢", "▢"], [nil, "◯"]],
+            [[nil, "▢"], ["◯", "▢"]],
+            [["◯", nil], ["▢", "▢"]]
+          ])
+        end
+      end
+    end
+    describe ".rotate" do
+      let(:piece) { GridLock::Piece::A }
+      let(:rotations) { GridLock::Piece.rotations(piece) } # 90º
+      let(:original) { rotations[0] }
+      let(:rotated_1) { rotations[1] } # 90º
+      let(:rotated_2) { rotations[2] } # 180º
+      let(:rotated_3) { rotations[3] } # 270º
+
+      context "one dimension" do
+
+        specify { expect(original).to eq([GridLock::CROSS, GridLock::CIRCLE]) }
+
+        it "90º" do
+          expect(rotated_1).to eq( [
+            [GridLock::CROSS],
+            [GridLock::CIRCLE]
+          ])
+        end 
+
+        it("180º") { expect(rotated_2).to eq( [ GridLock::CIRCLE, GridLock::CROSS ] ) }
+
+        it "270º" do
+          expect(rotated_3).to eq( [
+            [GridLock::CIRCLE],
+            [GridLock::CROSS]
+          ])
+        end
       end
 
-      it "180º" do
-        expect(rotated_2).to eq( [
-          [             nil, GridLock::SQUARE],
-          [ GridLock::CIRCLE, GridLock::CROSS],
-        ])
+      context "two dimensions" do
+        let(:piece) { GridLock::Piece::H }
+
+        it "original" do
+          expect(original).to eq( [
+            [GridLock::CROSS, GridLock::CIRCLE],
+            GridLock::SQUARE
+          ])
+        end
+
+        it "90º" do
+          expect(rotated_1).to eq( [
+            [GridLock::SQUARE, GridLock::CROSS],
+            [             nil, GridLock::CIRCLE],
+          ])
+        end
+
+        it "180º" do
+          expect(rotated_2).to eq( [
+            [             nil, GridLock::SQUARE],
+            [ GridLock::CIRCLE, GridLock::CROSS],
+          ])
+        end
+
+        it "270º" do
+          expect(rotated_3).to eq( [
+            [GridLock::CIRCLE, nil],
+            [GridLock::CROSS,GridLock::SQUARE]
+          ])
+        end
+      end
+    end
+
+    describe ".print" do
+      let(:piece) {  [["◯", "✚"], [nil, "▢"]] }
+      subject { puts ; GridLock::Piece.print(piece) }
+      specify do
+        expect { subject }.to output( %{
+◯ ✚
+  ▢
+}).to_stdout
+
+      end
+      context 'rotated' do
+        let(:piece) {[[nil, "◯"], ["✚", "▢"]]}
+        specify do
+          expect { subject }.to output( %{
+  ◯
+✚ ▢
+}).to_stdout
+        end
       end
 
-      it "270º" do
-        expect(rotated_4).to eq( [
-          [GridLock::CROSS, GridLock::CIRCLE],
-          [GridLock::SQUARE, nil]
-        ])
+      context 'simple' do
+        let(:piece){["✚", "▢"]}
+        specify do
+          expect { subject }.to output( %{
+✚ ▢
+
+}).to_stdout
+        end
+      end
+
+      context 'simple rotated' do
+        let(:piece){[["✚"], ["▢"]]}
+        specify do
+          expect { subject }.to output( %{
+✚
+▢
+}).to_stdout
+        end
       end
     end
   end
 
   context 'game' do
-
     let(:game) { GridLock::Game.new }
     let(:cross_circle) {  [GridLock::CROSS, GridLock::CIRCLE] }
     let(:rotated_cross_circle) {GridLock::Piece.rotate(cross_circle)}
@@ -99,21 +173,6 @@ RSpec.describe GridLock do
 ✚ ▢ ✚ ✚
 ◯ ▢ ◯ ◯
 ◯ ◯ ▢ ▢
-}).to_stdout
-    end
-
-    it "print piece" do
-      expect {puts ; game.print_piece([["◯", "✚"], [nil, "▢"]]) }.to output( %{
-◯ ✚
-  ▢
-}).to_stdout
-      expect { puts ; game.print_piece([[nil, "◯"], ["✚", "▢"]]) }.to output( %{
-  ◯
-✚ ▢
-}).to_stdout
-      expect { puts ; game.print_piece(["✚", "▢"]) }.to output( %{
-✚ ▢
-
 }).to_stdout
     end
 

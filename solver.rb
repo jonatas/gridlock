@@ -67,7 +67,7 @@ end
 
 begin
   solution, pieces_set = GridLock.ramdom_solution
-  game = GridLock::Game.new  pieces_set
+  game = GridLock::Game.new pieces: pieces_set
   mind = GridLock::Solver.learn game, solution, pieces_set
   overlap = GridLock::Solver.overlap mind
   require "pry"
