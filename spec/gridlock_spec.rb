@@ -1,19 +1,51 @@
 require "./gridlock"
 
 RSpec.describe GridLock do
-
-  it "has symbols" do
-    expect(GridLock::Symbols).to include([GridLock::CROSS, GridLock::SQUARE, GridLock::CIRCLE].sample)
-  end
-  it "has pieces with symbols" do
-    expect(GridLock::Piece::All).to include(GridLock::Piece::A)
-  end
-
-  it "has a default board" do
-    expect(GridLock::Board).to be_a(Array)
-  end
+  it("has symbols") { expect(GridLock::Symbols).to include([GridLock::CROSS, GridLock::SQUARE, GridLock::CIRCLE].sample) }
+  it("has pieces with symbols") { expect(GridLock::Piece::All).to include(GridLock::Piece::A) }
+  it("has a default board") { expect(GridLock::Board).to be_a(Array) }
 
   describe GridLock::Piece do
+    describe ".print" do
+      let(:piece) {  [["◯", "✚"], [nil, "▢"]] }
+      subject { puts ; GridLock::Piece.print(piece) }
+      specify do
+        expect { subject }.to output( %{
+◯ ✚
+  ▢
+}).to_stdout
+
+      end
+      context 'rotated' do
+        let(:piece) {[[nil, "◯"], ["✚", "▢"]]}
+        specify do
+          expect { subject }.to output( %{
+  ◯
+✚ ▢
+}).to_stdout
+        end
+      end
+
+      context 'simple' do
+        let(:piece){["✚", "▢"]}
+        specify do
+          expect { subject }.to output( %{
+✚ ▢
+
+}).to_stdout
+        end
+      end
+
+      context 'simple rotated' do
+        let(:piece){[["✚"], ["▢"]]}
+        specify do
+          expect { subject }.to output( %{
+✚
+▢
+}).to_stdout
+        end
+      end
+    end
     describe '.multidimensional?' do
       let(:piece) { GridLock::Piece::A }
       subject  { GridLock::Piece.multidimensional?(piece) }
@@ -115,52 +147,12 @@ RSpec.describe GridLock do
       end
     end
 
-    describe ".print" do
-      let(:piece) {  [["◯", "✚"], [nil, "▢"]] }
-      subject { puts ; GridLock::Piece.print(piece) }
-      specify do
-        expect { subject }.to output( %{
-◯ ✚
-  ▢
-}).to_stdout
-
-      end
-      context 'rotated' do
-        let(:piece) {[[nil, "◯"], ["✚", "▢"]]}
-        specify do
-          expect { subject }.to output( %{
-  ◯
-✚ ▢
-}).to_stdout
-        end
-      end
-
-      context 'simple' do
-        let(:piece){["✚", "▢"]}
-        specify do
-          expect { subject }.to output( %{
-✚ ▢
-
-}).to_stdout
-        end
-      end
-
-      context 'simple rotated' do
-        let(:piece){[["✚"], ["▢"]]}
-        specify do
-          expect { subject }.to output( %{
-✚
-▢
-}).to_stdout
-        end
-      end
-    end
   end
 
   context 'game' do
-    let(:game) { GridLock::Game.new }
+    let(:game) { GridLock::Game.new pieces: GridLock.solutions.values.first }
     let(:cross_circle) {  [GridLock::CROSS, GridLock::CIRCLE] }
-    let(:rotated_cross_circle) {GridLock::Piece.rotate(cross_circle)}
+    let(:rotated_cross_circle) {GridLock::Piece.rotations(cross_circle)[1]}
     let(:square_cross_circle) { [[GridLock::SQUARE, GridLock::CROSS], [GridLock::CIRCLE]] }
     let(:rotated_square_cross_circle) { GridLock::Piece.rotate(square_cross_circle) }
 
@@ -283,7 +275,7 @@ RSpec.describe GridLock do
         game.print_game
         expect(game.spot_busy?(2,1)).to be_truthy
         expect(game.spot_busy?(2,2)).to be_truthy
-        expect(game.history[0]).to match_array([[2,1], [2,2]])
+        expect(game.history[0]).to match_array([cross_circle,[[2,1], [2,2]]])
         game.undo
         expect(game.spot_busy?(2,1)).to be_falsy
         expect(game.spot_busy?(2,2)).to be_falsy

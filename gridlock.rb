@@ -26,13 +26,24 @@ module GridLock
     CIRCLE = "◯",
   ]
 
+  def self.solutions
+    [
+      'AABBCCDFGIJK', 'AABBCCDFGJLN', 'AABBCCCDEFFIJ', 'AABBCCCDEFFJN', 'AABBCCCDJKLM',
+      'AABBCCCDDEFHK', 'AABBFGIJKMN', 'AABBBCFFGJMN', 'AABBBCCCDDFGL', 'AAABCCDEEFFIJ',
+      'AAABCCDEEFFHJ', 'AAABCDDEEFFGN', 'AAABCCDDEEFKM', 'AAABBCEFJKMN', 'AAABBEFFGJMN',
+      'AAABBBCCCDFGH', 'AAABBBCCEFFIJ', 'AAABCDEFGIMN', 'AAABCCDDEEFHL', 'AAABCCCDGIJL',
+      'AAABBCEFIJKM', 'AAABBCCCDDEEFF', 'AAABBCCDGHKM', 'AAAABBCCDEFGI', 'AAACCCDEIJLN',
+      'AAABBCCCIJLN', 'AAAABCCDEEFHM', 'AAAABCCDEEFIM', 'AAAABBBCCCFGJ', 'AAAABBBCCDEEFF'
+    ].inject({}){|h,e| h[e] = e.split('').map{|piece|Object.const_get("GridLock::Piece::#{piece}")}; h}
+  end
+
   def self.ramdom_solution
-    solution = %w(AABCDDEFGIKN ABCDDEFFGJKM ABCCDEFFIJMN ABDDEEFFIKMN ABBCDEFFIJKM ABBCCCDFIJKM ABBCCCDDEFFJK).sample.split('')
-    [solution, get_pieces_for(solution)]
+    key = solutions.keys.sample
+    [key, solutions[key]]
   end
 
   def self.get_pieces_for solution
-    solution.map{|piece|Object.const_get("GridLock::Piece::#{piece}")}
+    solution
   end
 
   module Piece
@@ -137,7 +148,7 @@ module GridLock
     end
 
     def get_piece!
-      @last_piece = @pieces.sample
+       @pieces.sample
     end
 
     def spot_busy? row, col
@@ -266,13 +277,17 @@ module GridLock
       end
     end
 
+    def remove_from_pieces! piece
+      if (index = @pieces.index{|_piece|GridLock::Piece.rotations(_piece).include?(piece) })
+        @pieces.delete_at(index)
+      end
+    end
+
     def put! piece, row, col
       raise GameError, "piece: #{piece.inspect} does not fit on row: #{row}, col: #{col}" unless fit? piece, row, col
       status(row: row, col: col, piece: piece)
-      if (index = @pieces.index(@last_piece))
-        @pieces.delete_at(index)
-      end
-      @history << [@last_piece, []]
+      remove_from_pieces! piece
+      @history << [piece, []]
       navigate_on piece, row, col do |_row, _col|
         fill(_row, _col)
         @history.last.last << [_row, _col]
