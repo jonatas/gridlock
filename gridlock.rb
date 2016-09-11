@@ -27,10 +27,12 @@ module GridLock
   ]
 
   def self.ramdom_solution
-    %w(AABCDDEFGIKN ABCDDEFFGJKM ABCCDEFFIJMN ABDDEEFFIKMN ABBCDEFFIJKM ABBCCCDFIJKM ABBCCCDDEFFJK)
-      .sample
-      .split("")
-      .map{|piece|Object.const_get("GridLock::Piece::#{piece}")}
+    solution = %w(AABCDDEFGIKN ABCDDEFFGJKM ABCCDEFFIJMN ABDDEEFFIKMN ABBCDEFFIJKM ABBCCCDFIJKM ABBCCCDDEFFJK).sample.split('')
+    [solution, get_pieces_for(solution)]
+  end
+
+  def self.get_pieces_for solution
+    solution.map{|piece|Object.const_get("GridLock::Piece::#{piece}")}
   end
 
   module Piece
@@ -224,8 +226,8 @@ module GridLock
       @lookups+=1
       fit = true
       hover(row, col) do
-        each_symbol_of piece do |_sym, _row, _col|
-          if col+_col > @cols-1 || row+_row > @rows-1 || spot_busy?(row+_row, col+_col)
+        navigate_on piece, row, col do |_row, _col|
+          if _col > @cols-1 || _row > @rows-1 || spot_busy?(_row, _col)
             fit = false
             break
           end
@@ -244,6 +246,12 @@ module GridLock
       print_game
     end
 
+    def navigate_on piece, row, col
+      each_symbol_of piece do |_, r,c|
+        yield(row+r, col+c)
+      end
+    end
+
     def put! piece, row, col
       raise GameError, "piece: #{piece.inspect} does not fit on row: #{row}, col: #{col}" unless fit? piece, row, col
       status(row: row, col: col, piece: piece)
@@ -251,8 +259,7 @@ module GridLock
         @pieces.delete_at(index)
       end
       @history << [@last_piece, []]
-      each_symbol_of piece do |_, r,c|
-        _row, _col = row+r, col+c
+      navigate_on piece, row, col do |_row, _col|
         fill(_row, _col)
         @history.last.last << [_row, _col]
       end
