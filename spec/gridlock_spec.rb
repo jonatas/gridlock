@@ -70,9 +70,15 @@ RSpec.describe GridLock do
       specify do
         expect(subject).to eq([
                                 ['✚', '◯'],
-                                [['✚'], ['◯']],
+                                [
+                                  ['✚'],
+                                  ['◯']
+                                ],
                                 ['◯', '✚'],
-                                [['◯'], ['✚']]
+                                [
+                                  ['◯'],
+                                  ['✚']
+                                ]
                               ])
       end
 
