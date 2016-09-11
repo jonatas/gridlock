@@ -13,6 +13,12 @@ RSpec.describe GridLock do
     expect(GridLock::Board).to be_a(Array)
   end
 
+  it 'piece_simple?' do
+    expect(game.piece_simple?(GridLock::Piece::A)).to be_truthy
+    expect(game.piece_simple?(GridLock::Piece::B)).to be_truthy
+    expect(game.piece_simple?(GridLock::Piece.rotate(GridLock::Piece::B))).to be_truthy
+  end
+
   context "rotate" do
     let(:piece) { GridLock::Piece::A }
 
@@ -77,6 +83,7 @@ RSpec.describe GridLock do
   end
 
   context 'game' do
+
     let(:game) { GridLock::Game.new }
     let(:cross_circle) {  [GridLock::CROSS, GridLock::CIRCLE] }
     let(:rotated_cross_circle) {GridLock::Piece.rotate(cross_circle)}
